@@ -31,18 +31,34 @@ fi
 
 mkdir -p "${STATE_DIR}"
 
-cat > "${STATE_FILE}" <<EOF
+# Escape special characters for safe JSON embedding (fallback path)
+json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g'; }
+
+if command -v jq >/dev/null 2>&1; then
+  jq -n \
+    --arg prompt "${prompt}" \
+    --arg promise "${completion_promise}" \
+    --argjson max "${max_iterations}" \
+    --argjson oracle "${oracle_verify}" \
+    --arg started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{active:true,phase:"working",iteration:0,max_iterations:$max,completion_promise:$promise,oracle_verify:$oracle,prompt:$prompt,started_at:$started}' \
+    > "${STATE_FILE}"
+else
+  safe_prompt=$(json_escape "${prompt}")
+  safe_promise=$(json_escape "${completion_promise}")
+  cat > "${STATE_FILE}" <<EOF
 {
   "active": true,
   "phase": "working",
   "iteration": 0,
   "max_iterations": ${max_iterations},
-  "completion_promise": "${completion_promise}",
+  "completion_promise": "${safe_promise}",
   "oracle_verify": ${oracle_verify},
-  "prompt": "${prompt}",
+  "prompt": "${safe_prompt}",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
+fi
 
 if [ "${oracle_verify}" = "true" ]; then
   echo "[Ralph Loop] Started with Oracle verification (ulw-loop mode)"

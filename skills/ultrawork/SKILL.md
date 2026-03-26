@@ -20,6 +20,8 @@ Phase 1 — Context and planning:
 
 1. Restate the goal in one sentence.
 2. Read repo-local `CLAUDE.md` if it exists, `.claude/state/` if it exists, and the minimal repo files needed to discover canonical commands.
+   - If `.claude/state/memory/index.md` exists, read it to leverage project knowledge from past sessions.
+   - If `.claude/state/briefings/` has recent entries, read them for continuity.
 3. If `.claude/state/current-task.txt` is empty or stale, create or refresh a task note with `/omo:kickoff-task`.
 4. Create a todo list before editing. Keep it updated as work progresses.
 5. Use `repo-librarian` or built-in `Explore` for read-heavy discovery. Use `planner-sisyphus` when the task is still fuzzy after initial discovery.

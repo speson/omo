@@ -15,11 +15,13 @@ Recover context for: $ARGUMENTS
    - `git diff --name-only`
 3. If there is no git metadata, inspect recently modified files in the working directory instead.
 4. Read the latest task note and the latest handoff if they exist.
-5. Use `repo-librarian` if you need to reconstruct feature intent from file names or docs.
-6. Summarize:
+5. Read recent briefings from `.claude/state/briefings/` if they exist.
+6. If `.claude/state/memory/index.md` exists, read it for project knowledge context.
+7. Use `repo-librarian` if you need to reconstruct feature intent from file names or docs.
+8. Summarize:
    - likely task in progress
    - touched files
    - unfinished work
    - next 3 actions
    - best verification command
-7. If the user supplied new instructions in `$ARGUMENTS`, merge them into the next-step proposal.
+9. If the user supplied new instructions in `$ARGUMENTS`, merge them into the next-step proposal.

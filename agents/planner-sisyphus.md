@@ -41,8 +41,14 @@ Rules:
 - Prefer 3 to 7 steps.
 - Call out blockers instead of guessing.
 - Tag effort per step: Quick(<1h), Short(1-4h), Medium(1-2d), Large(3d+).
+- Before returning the plan, self-assess with these 3 questions:
+  1. Can a developer start each step without needing to ask me anything?
+  2. Are all referenced files and commands verified to exist?
+  3. Is the scope clearly bounded — what is NOT included?
 - End with these sections:
   - `Plan`
   - `Parallelizable`
   - `Verification`
   - `Risks`
+  - `Confidence: HIGH|MEDIUM|LOW`
+  - `Escalation: none|recommended`

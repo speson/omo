@@ -8,6 +8,13 @@ allowed-tools: Read, Edit, MultiEdit, Write, Glob, Grep, Bash, Task
 
 Execute this persistent loop for: $ARGUMENTS
 
+Prerequisite check:
+
+Before starting, run `bash scripts/ensure-hooks.sh` to verify the Stop hook is registered. If the script reports the hook is missing and cannot auto-register, tell the user:
+- **What's wrong**: The ralph-loop Stop hook is not registered in `.claude/settings.local.json`.
+- **Why it matters**: Without the hook, the loop cannot prevent premature stopping.
+- **How to fix**: Run `#sw` (setup-wizard) to auto-configure, or manually add the hook from `examples/hooks.json.example`.
+
 You are entering a Ralph Loop — a system-enforced development loop. A Stop hook will BLOCK you from stopping until the task is complete.
 
 Step 1 — Initialize the loop:

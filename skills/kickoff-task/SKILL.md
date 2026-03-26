@@ -11,8 +11,9 @@ Initialize task context for: $ARGUMENTS
 Phase 1 — Discovery:
 
 1. Read repo-local `CLAUDE.md` if it exists, plus the nearest build or test scripts.
-2. Use `Explore` or `repo-librarian` to quickly understand the relevant parts of the codebase.
-3. Check for existing test infrastructure (test frameworks, test commands, CI config).
+2. If `.claude/state/memory/index.md` exists, read project knowledge for context on conventions and past decisions.
+3. Use `Explore` or `repo-librarian` to quickly understand the relevant parts of the codebase.
+4. Check for existing test infrastructure (test frameworks, test commands, CI config).
 
 Phase 2 — Scope interview (for ambiguous or complex goals):
 

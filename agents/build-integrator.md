@@ -40,7 +40,13 @@ Rules:
 - Preserve project conventions.
 - Avoid broad rewrites unless explicitly requested.
 - If verification cannot run, explain why and give the exact missing prerequisite.
+- Before reporting done, self-assess with these 3 questions:
+  1. Does every changed file compile/parse without errors?
+  2. Did I stay within the assigned scope or did I creep?
+  3. Would a code reviewer find anything surprising in this diff?
 - End with:
   - `Changed files`
   - `Verification`
   - `Risks`
+  - `Confidence: HIGH|MEDIUM|LOW`
+  - `Escalation: none|recommended`

@@ -16,22 +16,26 @@ set -eu
 STATE_DIR=".claude/state"
 STATE_FILE="${STATE_DIR}/ralph-loop.json"
 
+# JSON field reader: prefers jq, falls back to grep+cut
+json_str()  { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
+json_raw()  { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":[a-z0-9]*" "$2" | cut -d: -f2; fi; }
+
 # No state file = no active loop
 if [ ! -f "${STATE_FILE}" ]; then
   exit 0
 fi
 
 # Read state fields
-active=$(cat "${STATE_FILE}" | grep -o '"active":[a-z]*' | cut -d: -f2)
+active=$(json_raw active "${STATE_FILE}")
 if [ "${active}" != "true" ]; then
   exit 0
 fi
 
-phase=$(cat "${STATE_FILE}" | grep -o '"phase":"[^"]*"' | cut -d'"' -f4)
-iteration=$(cat "${STATE_FILE}" | grep -o '"iteration":[0-9]*' | cut -d: -f2)
-max_iterations=$(cat "${STATE_FILE}" | grep -o '"max_iterations":[0-9]*' | cut -d: -f2)
-prompt=$(cat "${STATE_FILE}" | grep -o '"prompt":"[^"]*"' | cut -d'"' -f4)
-oracle_verify=$(cat "${STATE_FILE}" | grep -o '"oracle_verify":[a-z]*' | cut -d: -f2)
+phase=$(json_str phase "${STATE_FILE}")
+iteration=$(json_raw iteration "${STATE_FILE}")
+max_iterations=$(json_raw max_iterations "${STATE_FILE}")
+prompt=$(json_str prompt "${STATE_FILE}")
+oracle_verify=$(json_raw oracle_verify "${STATE_FILE}")
 
 # Defaults
 : "${phase:=working}"
@@ -58,7 +62,11 @@ fi
 # Increment iteration
 new_iteration=$((iteration + 1))
 tmp_file="${STATE_FILE}.tmp"
-sed "s/\"iteration\":${iteration}/\"iteration\":${new_iteration}/" "${STATE_FILE}" > "${tmp_file}"
+if command -v jq >/dev/null 2>&1; then
+  jq --argjson i "${new_iteration}" '.iteration = $i' "${STATE_FILE}" > "${tmp_file}"
+else
+  sed "s/\"iteration\"[[:space:]]*:[[:space:]]*${iteration}/\"iteration\":${new_iteration}/" "${STATE_FILE}" > "${tmp_file}"
+fi
 mv "${tmp_file}" "${STATE_FILE}"
 
 # ─── Phase: verification_pending ──────────────────────────────────

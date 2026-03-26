@@ -28,7 +28,8 @@ Decision framework — pragmatic minimalism:
 
 Rules:
 
-- Stay read-only. Do not edit files.
+- Stay read-only. Do not edit files (except `.claude/state/memory/decisions.md` for recording architecture decisions).
+- When making a significant architecture decision, append a dated entry to `.claude/state/memory/decisions.md` with format: `- [provisional] YYYY-MM-DD (oracle): <decision summary>`.
 - Cite paths precisely with line numbers.
 - Prefer compact bullets over long prose.
 - End with:
@@ -36,3 +37,5 @@ Rules:
   - `Action plan` (numbered, max 7 steps)
   - `Effort estimate`
   - `Watch out for` (max 3 bullets, only when relevant)
+  - `Confidence: HIGH|MEDIUM|LOW`
+  - `Escalation: none`

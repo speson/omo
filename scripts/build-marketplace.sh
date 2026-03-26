@@ -12,7 +12,14 @@ rm -rf "${dist_root}"
 mkdir -p "${marketplace_root}/.claude-plugin"
 mkdir -p "${plugin_root}"
 
-cat > "${marketplace_root}/.claude-plugin/marketplace.json" <<'EOF'
+# Extract version from plugin.json (single source of truth)
+if command -v jq >/dev/null 2>&1; then
+  plugin_version=$(jq -r '.version' "${repo_root}/.claude-plugin/plugin.json")
+else
+  plugin_version=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "${repo_root}/.claude-plugin/plugin.json" | head -1 | cut -d'"' -f4)
+fi
+
+cat > "${marketplace_root}/.claude-plugin/marketplace.json" <<EOF
 {
   "name": "omo",
   "owner": {
@@ -20,14 +27,14 @@ cat > "${marketplace_root}/.claude-plugin/marketplace.json" <<'EOF'
   },
   "metadata": {
     "description": "Local marketplace bundle for the omo Claude Code plugin.",
-    "version": "0.1.0"
+    "version": "${plugin_version}"
   },
   "plugins": [
     {
       "name": "omo",
       "source": "./plugins/omo",
       "description": "Reusable Claude Code operating workflows for task kickoff, session recovery, repo mapping, debugging, and ship checks.",
-      "version": "0.1.0",
+      "version": "${plugin_version}",
       "author": {
         "name": "markncompany"
       }

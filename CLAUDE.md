@@ -38,6 +38,15 @@ All skills support auto-intercept via `#shortcut` patterns. Type `#ulw auth êµ¬í
 | `#ho` | `/omo:handoff [next-step]` | Handoff note when stopping mid-task |
 | `#cc` | `/omo:comment-check [scope]` | Audit comments, docs, and prompts |
 | `#mcp` | `/omo:mcp-doctor` | Diagnose MCP availability |
+| `#sw` | `/omo:setup-wizard [--full]` | Auto-detect and configure omo prerequisites |
+| `#st` | `/omo:self-test` | Plugin structure and version integrity check |
+| `#re` | `/omo:retro` | Post-session retrospective analysis |
+| `#pc` | `/omo:perf-check [scope]` | Performance impact analysis |
+| `#da` | `/omo:dep-audit [scope]` | Dependency security audit |
+| `#mg` | `/omo:migrate <target>` | Framework/API/language migration orchestration |
+| `#pr` | `/omo:pr-review [pr-number]` | Comprehensive GitHub PR review |
+| `#ob` | `/omo:onboard [focus]` | Project onboarding guide generation |
+| `#tc` | `/omo:tool-check` | External tool dependency verification |
 
 Preferred specialists
 
@@ -52,6 +61,15 @@ Preferred specialists
 - `atlas` for master orchestration of complex multi-step plans
 - `vision` for screenshot, PDF, and image analysis
 - `deepsearch` for multi-strategy parallel codebase search
+- `perf-analyst` for performance impact analysis
+- `memory-keeper` for cross-session memory management
+- `security-auditor` for OWASP Top 10 and secret detection
+- `test-generator` for edge-case test generation from diffs
+- `migration-specialist` for pattern-based bulk transformations
+- `critic-lite` for lightweight plan review (simple plans)
+- `oracle-lite` for quick first-pass technical advice
+- `build-integrator-heavy` for complex changes (after 2+ failures)
+- `repo-librarian-deep` for deep feature tracing
 
 Repo-local state created by the plugin
 
@@ -59,6 +77,9 @@ Repo-local state created by the plugin
 - Active task notes: `.claude/state/tasks/`
 - Handoffs: `.claude/state/handoffs/`
 - Repo map: `.claude/state/repo-map.md`
+- Task history: `.claude/state/task-history.log`
+- Briefings: `.claude/state/briefings/`
+- Cross-session memory: `.claude/state/memory/` (conventions, decisions, failures)
 
 Operating rules
 

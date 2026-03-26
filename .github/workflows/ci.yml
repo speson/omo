@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check plugin.json is valid JSON
+        run: python3 -c "import json; json.load(open('.claude-plugin/plugin.json'))"
+
+      - name: Check marketplace.json is valid JSON
+        run: python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+
+      - name: Version consistency
+        run: bash scripts/check-version.sh
+
+      - name: Skill frontmatter check
+        run: |
+          errors=0
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "${skill_dir}")
+            skill_file="${skill_dir}SKILL.md"
+            if [ ! -f "${skill_file}" ]; then
+              echo "FAIL: ${skill_dir} missing SKILL.md"
+              errors=$((errors + 1))
+              continue
+            fi
+            if ! head -1 "${skill_file}" | grep -q '^---$'; then
+              echo "FAIL: ${skill_file} missing frontmatter"
+              errors=$((errors + 1))
+              continue
+            fi
+            for field in name description allowed-tools; do
+              if ! grep -q "^${field}:" "${skill_file}"; then
+                echo "FAIL: ${skill_file} missing field: ${field}"
+                errors=$((errors + 1))
+              fi
+            done
+            fm_name=$(grep '^name:' "${skill_file}" | head -1 | sed 's/^name:[[:space:]]*//')
+            if [ "${fm_name}" != "${skill_name}" ]; then
+              echo "FAIL: ${skill_file} name '${fm_name}' != directory '${skill_name}'"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ "${errors}" -gt 0 ]; then
+            echo "${errors} skill validation error(s)"
+            exit 1
+          fi
+          echo "All skills valid"
+
+      - name: Agent frontmatter check
+        run: |
+          errors=0
+          for agent_file in agents/*.md; do
+            for field in name description tools model maxTurns; do
+              if ! grep -q "^${field}:" "${agent_file}"; then
+                echo "FAIL: ${agent_file} missing field: ${field}"
+                errors=$((errors + 1))
+              fi
+            done
+          done
+          if [ "${errors}" -gt 0 ]; then
+            echo "${errors} agent validation error(s)"
+            exit 1
+          fi
+          echo "All agents valid"
+
+      - name: Script shebang check
+        run: |
+          errors=0
+          for script in scripts/*.sh; do
+            if ! head -1 "${script}" | grep -qE '^#!/'; then
+              echo "FAIL: ${script} missing shebang"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ "${errors}" -gt 0 ]; then
+            echo "${errors} script error(s)"
+            exit 1
+          fi
+          echo "All scripts have shebangs"
+
+      - name: ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: scripts/
+          severity: warning
+
+      - name: Build marketplace
+        run: bash scripts/build-marketplace.sh

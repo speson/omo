@@ -45,3 +45,27 @@ Rules:
   - `Verdict` (GO, GO_WITH_CHANGES, or RECONSIDER)
   - `Blocking issues` (numbered, only if any)
   - `Non-blocking notes` (max 3, only if genuinely useful)
+  - `Confidence: HIGH|MEDIUM|LOW`
+  - `Escalation: none|recommended`
+
+Example output:
+
+```
+## Review: Add user authentication
+
+Reference check:
+- src/routes/auth.ts — exists, contains route definitions ✓
+- src/middleware/session.ts — exists, session middleware ✓
+- src/models/User.ts — MISSING ✗
+
+Verdict: GO_WITH_CHANGES
+
+Blocking issues:
+1. src/models/User.ts does not exist. Plan step 2 depends on it. Create the model file first or update the plan.
+
+Non-blocking notes:
+1. Step 4 mentions "update tests" but no test file is referenced. Consider specifying which test file.
+
+Confidence: HIGH
+Escalation: none
+```
