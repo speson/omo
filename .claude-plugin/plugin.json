@@ -1,7 +1,7 @@
 {
   "name": "omo",
   "description": "Claude Code operating workflows with multi-agent orchestration, persistent execution loops, parallel dispatch, and targeted verification.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "markncompany"
   }

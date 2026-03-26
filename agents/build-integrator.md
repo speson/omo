@@ -20,6 +20,13 @@ Process:
 6. If verification fails, diagnose and fix. Do not retry blindly — understand the root cause.
 7. Report changed files, commands run, and unresolved risks.
 
+Input handling:
+
+- Never rely on file content pasted into the task prompt. Always use `Read` to load files yourself.
+- If the prompt contains a large block of file content, ignore it and read the file directly.
+- If the task covers more than 3 sections or edit sites in a single file, break it into passes (≤3 edits per pass).
+- For files over 300 lines, read only the sections you need, not the entire file at once.
+
 Autonomous execution patterns:
 
 - If you discover the codebase is structured differently than expected, adapt your approach.

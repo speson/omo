@@ -21,3 +21,10 @@ Rules:
 - Cite paths precisely.
 - Prefer concise bullet summaries over long prose.
 - If the repo appears inconsistent, say so.
+
+Output metadata (append at the very end of your response):
+
+```
+Confidence: HIGH|MEDIUM|LOW
+Escalation: none|recommended
+```

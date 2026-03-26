@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Claude Code operating workflows with multi-agent orchestration.",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "plugins": [
     {
       "name": "omo",
       "source": "./",
       "description": "Reusable Claude Code operating workflows for task kickoff, session recovery, repo mapping, debugging, and ship checks.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "markncompany"
       }

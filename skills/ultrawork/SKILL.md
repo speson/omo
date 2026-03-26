@@ -31,6 +31,8 @@ Phase 2 — Execution:
 
 7. If the task is a bug, bring in `bug-hunter` before editing. If verification is expensive or unclear, bring in `test-commander`.
 8. If the work splits cleanly into independent slices, use `/omo:spawn` or delegate at most 3 slices in parallel via `Task` with `run_in_background=true`. If the repo is a git repo and the change is much larger, suggest built-in `/batch` instead.
+   - **Slice size limit**: Each delegated slice should target ≤3 files or ≤3 edit sites per file. Never paste entire file contents into a Task prompt — let the agent read files itself.
+   - **Docs vs code**: Documentation files (`.md`, guides, READMEs) should be delegated to `docs-keeper` or edited directly, not to `build-integrator`. Reserve `build-integrator` for code files only.
 9. Implement the smallest coherent slice first. Re-plan after the first slice if reality changed.
 10. After each meaningful edit cluster, run targeted verification immediately.
 
@@ -50,11 +52,11 @@ Specialist delegation:
 - `oracle` for architecture decisions or after 2+ failed fix attempts.
 - `bug-hunter` for debugging and failure triage.
 - `test-commander` for verification strategy.
-- `build-integrator` for implementation slices.
+- `build-integrator` for code implementation slices (not docs).
 - `deepsearch` for comprehensive codebase search.
 - `critic` for plan review before execution.
 - `vision` for screenshot or image analysis.
-- `docs-keeper` for documentation cleanup.
+- `docs-keeper` for documentation and guide file changes (including new content, not just cleanup).
 
 Guardrails:
 

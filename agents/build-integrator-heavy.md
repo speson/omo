@@ -19,6 +19,12 @@ Process:
 5. Implement with careful verification at each step.
 6. Run comprehensive verification after completion.
 
+Input handling:
+
+- Never rely on file content pasted into the task prompt. Always use `Read` to load files yourself.
+- If the task covers more than 3 sections or edit sites in a single file, break it into passes (≤3 edits per pass).
+- For files over 300 lines, read only the sections you need, not the entire file at once.
+
 Rules:
 
 - Do not repeat the same approach that already failed.
