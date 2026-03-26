@@ -1,18 +1,11 @@
-# omo 플러그인 v0.2.0 — 전체 기능 및 유저 플로우 가이드
+# omo 플러그인 v0.2.0 — 상세 유저 플로우 가이드
 
-## 1. 설치 및 설정
+> 스킬 목록, 에이전트 소개, 설치 방법 등 기본 정보는 [README](../README.md)를 참고하세요.
+> 이 문서는 각 기능의 **내부 동작과 유저 플로우**를 상세히 설명합니다.
 
-### 개발자 모드 (소스에서 직접 로드)
-```bash
-cd claude-oc-omo
-claude --plugin-dir .
-```
+---
 
-### 마켓플레이스 설치
-```bash
-./scripts/build-marketplace.sh
-claude plugin install -s local omo
-```
+## 1. 플러그인 내부 구성
 
 ### Ralph Loop 훅 설정 (ralph-loop 사용 시 필수)
 사용할 프로젝트의 `.claude/settings.local.json`에 추가:
@@ -25,52 +18,6 @@ claude plugin install -s local omo
   }
 }
 ```
-
-### 로드 확인
-```
-/reload-plugins
-```
-
----
-
-## 2. 플러그인 구성 요소 전체 현황
-
-### 에이전트 11개
-
-| 에이전트 | 모델 | maxTurns | 역할 | 쓰기 권한 |
-|---------|------|:--------:|------|:--------:|
-| **oracle** | opus | 14 | 아키텍처 분석, 어려운 디버깅 자문 | 읽기 전용 |
-| **critic** | opus | 12 | 플랜 실행 가능성 검증 | 읽기 전용 |
-| **planner-sisyphus** | sonnet | 16 | 인터뷰 모드 기획, 실행 계획 분해 | 읽기 전용 |
-| **atlas** | sonnet | 24 | 다수 에이전트 조율 오케스트레이터 | 위임만 |
-| **build-integrator** | sonnet | 22 | 자율적 다중 파일 구현 | acceptEdits |
-| **bug-hunter** | sonnet | 14 | 장애 원인 축소, 재현 경로 제안 | 읽기 전용 |
-| **vision** | sonnet | 8 | 스크린샷/PDF/이미지 분석 | 읽기 전용 |
-| **repo-librarian** | haiku | 10 | 레포 탐색, 컨벤션 조회 | 읽기 전용 |
-| **test-commander** | haiku | 12 | 최소 검증 커맨드 선정 및 실행 | 읽기 전용 |
-| **deepsearch** | haiku | 14 | 다전략 병렬 코드베이스 검색 | 읽기 전용 |
-| **docs-keeper** | haiku | 12 | 문서/코멘트/프롬프트 위생 | acceptEdits |
-
-### 스킬 14개
-
-모든 스킬은 자동 인터셉트와 `#단축키` 패턴을 지원합니다. `/omo:ultrawork` 대신 `#ulw`만 입력해도 동작합니다.
-
-| 스킬 | 단축키 | 호출 방법 | 설명 |
-|------|:------:|----------|------|
-| **ultrawork** | `#ulw` | `#ulw <목표>` 또는 `/omo:ultrawork` | 대규모 작업 오케스트레이션 |
-| **kickoff-task** | `#kit` | `#kit <목표>` 또는 `/omo:kickoff-task` | 인터뷰 모드 작업 초기화 |
-| **ralph-loop** | `#rl` | `#rl <목표>` 또는 `/omo:ralph-loop` | 완료까지 멈추지 않는 시스템 강제 루프 |
-| **repo-radar** | `#rr` | `#rr [범위]` 또는 `/omo:repo-radar` | 레포 매핑 + 계층 AGENTS.md |
-| **resume-work** | `#rw` | `#rw [목표]` 또는 `/omo:resume-work` | 세션 컨텍스트 복구 |
-| **bug-hunt** | `#bh` | `#bh <증상>` 또는 `/omo:bug-hunt` | 장애 트리아지 및 디버깅 |
-| **ship-check** | `#sc` | `#sc [범위]` 또는 `/omo:ship-check` | 출시 전 점검 |
-| **diff-review** | `#dr` | `#dr [범위]` 또는 `/omo:diff-review` | 5관점 코드 리뷰 |
-| **qa-loop** | `#qa` | `#qa [테스트 커맨드]` 또는 `/omo:qa-loop` | 자동 테스트-수정-재테스트 |
-| **deep-search** | `#ds` | `#ds <쿼리>` 또는 `/omo:deep-search` | 다전략 병렬 코드 검색 |
-| **spawn** | `#sp` | `#sp <목표>` 또는 `/omo:spawn` | 병렬 에이전트 디스패치 |
-| **handoff** | `#ho` | `#ho [다음 단계]` 또는 `/omo:handoff` | 구조화된 인수인계 노트 |
-| **comment-check** | `#cc` | `#cc [범위]` 또는 `/omo:comment-check` | 코멘트/문서 위생 점검 |
-| **mcp-doctor** | `#mcp` | `#mcp` 또는 `/omo:mcp-doctor` | MCP 설정 진단 |
 
 ### 스크립트 11개
 
@@ -101,7 +48,7 @@ claude plugin install -s local omo
 
 ---
 
-## 3. 유저 플로우별 상세 설명
+## 2. 유저 플로우별 상세 설명
 
 ---
 
@@ -546,7 +493,7 @@ Cycle 3:
 
 ---
 
-## 4. 에이전트 역할 관계도
+## 3. 에이전트 역할 관계도
 
 ```
                     ┌─────────────┐
@@ -583,7 +530,7 @@ Cycle 3:
 
 ---
 
-## 5. 스킬 <-> 에이전트 연동 맵
+## 4. 스킬 <-> 에이전트 연동 맵
 
 | 스킬 | 호출하는 에이전트 | 자동 |
 |------|-----------------|:----:|
@@ -604,7 +551,7 @@ Cycle 3:
 
 ---
 
-## 6. Ralph Loop 스크립트 관계도
+## 5. Ralph Loop 스크립트 관계도
 
 ```
 ralph-loop-start.sh --생성--> ralph-loop.json
