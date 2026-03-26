@@ -1,0 +1,4 @@
+dist/
+.claude-tui/
+.claude/settings.local.json
+.claude/state/

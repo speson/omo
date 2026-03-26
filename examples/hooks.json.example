@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": ["bash scripts/ralph-loop-guard.sh"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "docs": {
+      "command": "REPLACE_WITH_DOCS_SERVER_COMMAND",
+      "args": ["REPLACE_WITH_DOCS_SERVER_ARGS"]
+    },
+    "browser": {
+      "command": "REPLACE_WITH_BROWSER_SERVER_COMMAND",
+      "args": ["REPLACE_WITH_BROWSER_SERVER_ARGS"]
+    },
+    "issues": {
+      "command": "REPLACE_WITH_ISSUE_SERVER_COMMAND",
+      "args": ["REPLACE_WITH_ISSUE_SERVER_ARGS"]
+    },
+    "code-search": {
+      "command": "REPLACE_WITH_SEARCH_SERVER_COMMAND",
+      "args": ["REPLACE_WITH_SEARCH_SERVER_ARGS"]
+    },
+    "memory": {
+      "command": "REPLACE_WITH_MEMORY_SERVER_COMMAND",
+      "args": ["REPLACE_WITH_MEMORY_SERVER_ARGS"]
+    }
+  }
+}
