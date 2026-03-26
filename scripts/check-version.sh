@@ -3,8 +3,8 @@
 # plugin.json is the single source of truth.
 set -eu
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repo_root=$(CDPATH= cd -- "${script_dir}/.." && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH='' cd -- "${script_dir}/.." && pwd)
 
 plugin_json="${repo_root}/.claude-plugin/plugin.json"
 marketplace_json="${repo_root}/.claude-plugin/marketplace.json"

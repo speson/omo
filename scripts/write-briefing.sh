@@ -18,7 +18,7 @@ mkdir -p "${BRIEFINGS_DIR}"
 timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 filename="${BRIEFINGS_DIR}/${slug}-${agent}-$(date -u +%Y%m%d-%H%M%S).md"
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 template="${script_dir}/../templates/briefing.md"
 
 if [ -f "${template}" ]; then

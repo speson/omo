@@ -5,8 +5,8 @@
 # Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, all
 set -eu
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repo_root=$(CDPATH= cd -- "${script_dir}/.." && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH='' cd -- "${script_dir}/.." && pwd)
 
 pass=0
 fail=0
