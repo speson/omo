@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "omo",
-      "source": ".",
+      "source": "./",
       "description": "Reusable Claude Code operating workflows for task kickoff, session recovery, repo mapping, debugging, and ship checks.",
       "version": "0.2.0",
       "author": {
