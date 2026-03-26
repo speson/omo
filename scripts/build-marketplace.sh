@@ -16,7 +16,7 @@ cat > "${marketplace_root}/.claude-plugin/marketplace.json" <<'EOF'
 {
   "name": "omo",
   "owner": {
-    "name": "MarkNCompany"
+    "name": "markncompany"
   },
   "metadata": {
     "description": "Local marketplace bundle for the omo Claude Code plugin.",
@@ -29,7 +29,7 @@ cat > "${marketplace_root}/.claude-plugin/marketplace.json" <<'EOF'
       "description": "Reusable Claude Code operating workflows for task kickoff, session recovery, repo mapping, debugging, and ship checks.",
       "version": "0.1.0",
       "author": {
-        "name": "MarkNCompany"
+        "name": "markncompany"
       }
     }
   ]

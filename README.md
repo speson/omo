@@ -191,4 +191,4 @@ omo/
 
 ## 라이선스
 
-MarkNCompany 내부 사용 전용
+markncompany 내부 사용 전용
