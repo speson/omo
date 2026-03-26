@@ -22,13 +22,7 @@ OMO는 복잡한 개발 작업을 전문 에이전트 팀에게 위임하여 체
 /plugin install omo
 ```
 
-### 3. 설치 확인
-
-Claude Code 세션에서 플러그인이 정상적으로 로드되었는지 확인합니다.
-
-```
-/reload-plugins
-```
+설치 후 Claude Code를 재시작하세요.
 
 ## 스킬 명령어
 
