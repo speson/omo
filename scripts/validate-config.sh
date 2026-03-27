@@ -188,6 +188,47 @@ if [ -n "${max_agents}" ] && [ "${max_agents}" != "null" ]; then
   esac
 fi
 
+# ─── boulder.enabled ──────────────────────────────────────────────────────────
+boulder_enabled=$(json_get '.boulder.enabled')
+if [ -n "${boulder_enabled}" ] && [ "${boulder_enabled}" != "null" ]; then
+  case "${boulder_enabled}" in
+    true|false) ;;
+    *)
+      echo "  ERROR: boulder.enabled must be boolean, got '${boulder_enabled}'"
+      errors=$((errors + 1))
+      ;;
+  esac
+fi
+
+# ─── boulder.max_attempts ────────────────────────────────────────────────────
+boulder_max=$(json_get '.boulder.max_attempts')
+if [ -n "${boulder_max}" ] && [ "${boulder_max}" != "null" ]; then
+  case "${boulder_max}" in
+    ''|*[!0-9]*)
+      echo "  ERROR: boulder.max_attempts must be a positive integer, got '${boulder_max}'"
+      errors=$((errors + 1))
+      ;;
+    *)
+      if [ "${boulder_max}" -le 0 ]; then
+        echo "  ERROR: boulder.max_attempts must be positive, got ${boulder_max}"
+        errors=$((errors + 1))
+      fi
+      ;;
+  esac
+fi
+
+# ─── boulder.auto_resume ────────────────────────────────────────────────────
+boulder_auto=$(json_get '.boulder.auto_resume')
+if [ -n "${boulder_auto}" ] && [ "${boulder_auto}" != "null" ]; then
+  case "${boulder_auto}" in
+    true|false) ;;
+    *)
+      echo "  ERROR: boulder.auto_resume must be boolean, got '${boulder_auto}'"
+      errors=$((errors + 1))
+      ;;
+  esac
+fi
+
 # ─── disabled_skills ─────────────────────────────────────────────────────────
 ds_type=$(json_get '.disabled_skills | type' 2>/dev/null || true)
 if [ -n "${ds_type}" ] && [ "${ds_type}" != "null" ] && [ "${ds_type}" != "array" ]; then

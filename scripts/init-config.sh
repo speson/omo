@@ -47,6 +47,11 @@ if command -v jq >/dev/null 2>&1; then
     "spawn": {
       "max_concurrent_agents": 5
     },
+    "boulder": {
+      "enabled": true,
+      "max_attempts": 5,
+      "auto_resume": true
+    },
     "disabled_skills": []
   }' > "${config_file}"
 else
@@ -68,6 +73,11 @@ else
   },
   "spawn": {
     "max_concurrent_agents": 5
+  },
+  "boulder": {
+    "enabled": true,
+    "max_attempts": 5,
+    "auto_resume": true
   },
   "disabled_skills": []
 }

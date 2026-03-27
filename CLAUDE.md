@@ -94,6 +94,32 @@ Preferred specialists
 - `build-integrator-heavy` for complex changes (after 2+ failures)
 - `repo-librarian-deep` for deep feature tracing
 
+Hooks
+
+omo registers lifecycle hooks via `hooks/hooks.json` (plugin-native). The hooks are auto-registered when the plugin is loaded.
+
+| Hook Event | Trigger | Script | Purpose |
+|---|---|---|---|
+| `Stop` | Every stop attempt | `ralph-loop-guard.sh` | Block premature stop during Ralph Loop |
+| `SessionStart` | Session start/resume | `session-context-hook.sh` | Inject Boulder task context |
+| `Notification` | Idle prompt | `idle-resume-hook.sh` | Nudge Boulder task resume |
+
+For manual hook registration (without plugin install), run `bash scripts/ensure-hooks.sh`.
+
+Boulder (Cross-Session Task Persistence)
+
+Boulder tracks task state across sessions. When a task is initialized with `boulder-init.sh`, it persists in `.claude/state/boulder.json` and is automatically restored on session restart.
+
+| Script | Purpose |
+|---|---|
+| `boulder-init.sh "goal"` | Initialize a persistent task |
+| `boulder-attempt.sh <outcome>` | Record attempt (working/interrupted/failed/completed) |
+| `boulder-check.sh` | Check if a task can be resumed (exit 0 = yes) |
+| `boulder-complete.sh` | Mark task as completed |
+| `boulder-status.sh` | Show human-readable status |
+
+Boulder is integrated into `#ulw`, `#rl`, `#rw`, and `#ho` skills. Configure via `.omo/config.json` boulder section. See `docs/config.md`.
+
 Repo-local state created by the plugin
 
 - Current task pointer: `.claude/state/current-task.txt`
@@ -103,6 +129,7 @@ Repo-local state created by the plugin
 - Task history: `.claude/state/task-history.log`
 - Briefings: `.claude/state/briefings/`
 - Cross-session memory: `.claude/state/memory/` (conventions, decisions, failures)
+- Boulder state: `.claude/state/boulder.json`
 
 Operating rules
 

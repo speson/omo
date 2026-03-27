@@ -1,0 +1,14 @@
+{
+  "active": true,
+  "task_slug": "auth-impl",
+  "task_file": ".claude/state/tasks/20260327-120000-auth-impl.md",
+  "goal": "사용자 인증 구현",
+  "attempts": 1,
+  "max_attempts": 5,
+  "consecutive_failures": 0,
+  "last_outcome": "interrupted",
+  "last_failure_reason": null,
+  "auto_resume": true,
+  "created_at": "2026-03-27T10:00:00Z",
+  "updated_at": "2026-03-27T10:30:00Z"
+}

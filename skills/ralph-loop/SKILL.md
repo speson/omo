@@ -24,6 +24,12 @@ Check if `--oracle` flag is present in the arguments. Then run the appropriate c
 - With Oracle verification: `bash scripts/ralph-loop-start.sh "<goal>" --oracle`
 - Without Oracle verification: `bash scripts/ralph-loop-start.sh "<goal>"`
 
+Initialize Boulder for cross-session persistence:
+
+```
+bash scripts/boulder-init.sh "<goal>"
+```
+
 The Stop hook (`scripts/ralph-loop-guard.sh`) will now intercept every stop attempt.
 
 Step 2 — Work the task:
@@ -43,6 +49,7 @@ Step 3 — Signal completion:
 When ALL todos are complete AND you have run your own verification:
 
 Run: `bash scripts/ralph-loop-done.sh`
+Run: `bash scripts/boulder-complete.sh`
 
 What happens next depends on the mode:
 

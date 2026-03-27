@@ -13,7 +13,7 @@
 # State file: .claude/state/ralph-loop.json
 set -eu
 
-STATE_DIR=".claude/state"
+STATE_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/state"
 STATE_FILE="${STATE_DIR}/ralph-loop.json"
 
 # JSON field reader: prefers jq, falls back to grep+cut

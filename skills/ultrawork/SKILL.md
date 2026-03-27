@@ -23,25 +23,27 @@ Phase 1 — Context and planning:
    - If `.claude/state/memory/index.md` exists, read it to leverage project knowledge from past sessions.
    - If `.claude/state/briefings/` has recent entries, read them for continuity.
 3. If `.claude/state/current-task.txt` is empty or stale, create or refresh a task note with `/omo:kickoff-task`.
-4. Create a todo list before editing. Keep it updated as work progresses.
-5. Use `repo-librarian` or built-in `Explore` for read-heavy discovery. Use `planner-sisyphus` when the task is still fuzzy after initial discovery.
-6. If the plan is complex (5+ steps), run `critic` to verify the plan is executable before starting.
+4. Initialize Boulder for cross-session persistence: `bash scripts/boulder-init.sh "<goal>"`
+5. Create a todo list before editing. Keep it updated as work progresses.
+6. Use `repo-librarian` or built-in `Explore` for read-heavy discovery. Use `planner-sisyphus` when the task is still fuzzy after initial discovery.
+7. If the plan is complex (5+ steps), run `critic` to verify the plan is executable before starting.
 
 Phase 2 — Execution:
 
-7. If the task is a bug, bring in `bug-hunter` before editing. If verification is expensive or unclear, bring in `test-commander`.
-8. If the work splits cleanly into independent slices, use `/omo:spawn` or delegate at most 3 slices in parallel via `Task` with `run_in_background=true`. If the repo is a git repo and the change is much larger, suggest built-in `/batch` instead.
+8. If the task is a bug, bring in `bug-hunter` before editing. If verification is expensive or unclear, bring in `test-commander`.
+9. If the work splits cleanly into independent slices, use `/omo:spawn` or delegate at most 3 slices in parallel via `Task` with `run_in_background=true`. If the repo is a git repo and the change is much larger, suggest built-in `/batch` instead.
    - **Slice size limit**: Each delegated slice should target ≤3 files or ≤3 edit sites per file. Never paste entire file contents into a Task prompt — let the agent read files itself.
    - **Docs vs code**: Documentation files (`.md`, guides, READMEs) should be delegated to `docs-keeper` or edited directly, not to `build-integrator`. Reserve `build-integrator` for code files only.
-9. Implement the smallest coherent slice first. Re-plan after the first slice if reality changed.
-10. After each meaningful edit cluster, run targeted verification immediately.
+10. Implement the smallest coherent slice first. Re-plan after the first slice if reality changed.
+11. After each meaningful edit cluster, run targeted verification immediately.
 
 Phase 3 — Verification and completion:
 
-11. Run `/omo:ship-check` or the best final verification available.
-12. If verification fails, fix and re-verify. Do not stop at partial completion.
-13. If the task pauses before completion (context limit approaching), run `/omo:handoff`.
-14. Before finishing, provide:
+12. Run `/omo:ship-check` or the best final verification available.
+13. If verification fails, fix and re-verify. Do not stop at partial completion.
+14. If the task pauses before completion (context limit approaching), run `/omo:handoff`.
+15. On successful completion, finalize Boulder: `bash scripts/boulder-complete.sh`
+16. Before finishing, provide:
     - outcome
     - files changed
     - verification results

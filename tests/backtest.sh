@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -1199,6 +1199,263 @@ AGENTEOF
 }
 
 # ═════════════════════════════════════════════════════════════════
+# SECTION 12: Boulder state machine
+# ═════════════════════════════════════════════════════════════════
+run_boulder_tests() {
+  echo "Boulder state machine:"
+  echo "──────────────────────"
+
+  local bdir="${tmpdir}/boulder"
+  mkdir -p "${bdir}/.claude/state"
+  cd "${bdir}"
+
+  echo ""
+  echo "  [Init and lifecycle]"
+
+  run_test "boulder-init: creates boulder.json" \
+    "bash '${repo_root}/scripts/boulder-init.sh' 'test task' && [ -f .claude/state/boulder.json ]"
+
+  run_test "boulder-init: valid JSON" \
+    "python3 -c \"import json; json.load(open('.claude/state/boulder.json'))\""
+
+  run_test "boulder-init: active is true" \
+    "grep -q '\"active\"' .claude/state/boulder.json && grep -q 'true' .claude/state/boulder.json"
+
+  run_test "boulder-init: goal stored" \
+    "grep -q 'test task' .claude/state/boulder.json"
+
+  run_test "boulder-init: attempts is 0" \
+    "grep -q '\"attempts\"' .claude/state/boulder.json"
+
+  run_test "boulder-init: slug generated" \
+    "grep -q '\"task_slug\"' .claude/state/boulder.json"
+
+  run_test_output "boulder-init: output shows slug" \
+    "rm -f .claude/state/boulder.json && bash '${repo_root}/scripts/boulder-init.sh' 'my test'" \
+    "Initialized"
+
+  echo ""
+  echo "  [Check]"
+
+  run_test "boulder-check: active boulder → exit 0" \
+    "bash '${repo_root}/scripts/boulder-check.sh'"
+
+  run_test_output "boulder-check: shows task info" \
+    "bash '${repo_root}/scripts/boulder-check.sh'" \
+    "Active task"
+
+  echo ""
+  echo "  [Attempt recording]"
+
+  run_test_output "boulder-attempt: working outcome" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' working" \
+    "Attempt"
+
+  run_test "boulder-attempt: valid JSON after working" \
+    "python3 -c \"import json; json.load(open('.claude/state/boulder.json'))\""
+
+  run_test_output "boulder-attempt: interrupted outcome" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' interrupted" \
+    "Attempt"
+
+  run_test_output "boulder-attempt: failed outcome" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' failed 'test failure'" \
+    "Attempt"
+
+  run_test "boulder-attempt: valid JSON after failed" \
+    "python3 -c \"import json; json.load(open('.claude/state/boulder.json'))\""
+
+  run_test_output "boulder-attempt: second failure → warning" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' failed 'another failure'" \
+    "WARNING"
+
+  run_test_output "boulder-attempt: working resets consecutive" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' working" \
+    "Attempt"
+
+  run_test_fail "boulder-attempt: invalid outcome → error" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' invalid_status"
+
+  run_test_fail "boulder-attempt: no args → error" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh'"
+
+  echo ""
+  echo "  [Complete]"
+
+  run_test_output "boulder-complete: marks complete" \
+    "bash '${repo_root}/scripts/boulder-complete.sh'" \
+    "Completed"
+
+  run_test "boulder-complete: valid JSON" \
+    "python3 -c \"import json; json.load(open('.claude/state/boulder.json'))\""
+
+  run_test "boulder-complete: active is false" \
+    "grep -q '\"active\":false' .claude/state/boulder.json || (command -v jq >/dev/null && [ \"\$(jq -r '.active' .claude/state/boulder.json)\" = 'false' ])"
+
+  run_test_fail "boulder-check: completed boulder → exit 1" \
+    "bash '${repo_root}/scripts/boulder-check.sh'"
+
+  echo ""
+  echo "  [Status]"
+
+  run_test_output "boulder-status: shows status" \
+    "bash '${repo_root}/scripts/boulder-status.sh'" \
+    "Boulder Status"
+
+  run_test_output "boulder-status: shows goal" \
+    "bash '${repo_root}/scripts/boulder-status.sh'" \
+    "Goal"
+
+  echo ""
+  echo "  [Edge cases]"
+
+  rm -f .claude/state/boulder.json
+
+  run_test_fail "boulder-check: no state → exit 1" \
+    "bash '${repo_root}/scripts/boulder-check.sh'"
+
+  run_test_fail "boulder-complete: no state → error" \
+    "bash '${repo_root}/scripts/boulder-complete.sh'"
+
+  run_test_fail "boulder-attempt: no state → error" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' working"
+
+  run_test "boulder-status: no state → no error" \
+    "bash '${repo_root}/scripts/boulder-status.sh'"
+
+  run_test_fail "boulder-init: no args → error" \
+    "bash '${repo_root}/scripts/boulder-init.sh'"
+
+  echo ""
+  echo "  [Unicode goal]"
+
+  run_test "boulder-init: unicode goal" \
+    "bash '${repo_root}/scripts/boulder-init.sh' '사용자 인증 구현' && [ -f .claude/state/boulder.json ]"
+
+  run_test "boulder-init: unicode valid JSON" \
+    "python3 -c \"import json; json.load(open('.claude/state/boulder.json'))\""
+
+  run_test_output "boulder-check: unicode task resumable" \
+    "bash '${repo_root}/scripts/boulder-check.sh'" \
+    "Active task"
+
+  rm -f .claude/state/boulder.json
+
+  echo ""
+  echo "  [Max attempts]"
+
+  run_test "boulder-init: custom max from config" \
+    "mkdir -p .omo && echo '{\"boulder\":{\"max_attempts\":2}}' > .omo/config.json && bash '${repo_root}/scripts/boulder-init.sh' 'max test'"
+
+  run_test "boulder-check: under max → exit 0" \
+    "bash '${repo_root}/scripts/boulder-check.sh'"
+
+  # Record attempts to reach max
+  run_test "boulder-attempt: first attempt" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' working"
+
+  run_test "boulder-attempt: second attempt" \
+    "bash '${repo_root}/scripts/boulder-attempt.sh' working"
+
+  run_test_fail "boulder-check: at max → exit 1" \
+    "bash '${repo_root}/scripts/boulder-check.sh'"
+
+  rm -f .claude/state/boulder.json .omo/config.json
+  rmdir .omo 2>/dev/null || true
+
+  echo ""
+  echo "  [Task file option]"
+
+  run_test "boulder-init: --task-file option" \
+    "bash '${repo_root}/scripts/boulder-init.sh' 'file test' --task-file=.claude/state/tasks/test.md && grep -q 'test.md' .claude/state/boulder.json"
+
+  rm -f .claude/state/boulder.json
+
+  cd "${tmpdir}"
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
+# SECTION 13: Hook scripts
+# ═════════════════════════════════════════════════════════════════
+run_hook_script_tests() {
+  echo "Hook scripts:"
+  echo "─────────────"
+
+  local hdir="${tmpdir}/hooktest"
+  mkdir -p "${hdir}/.claude/state"
+  cd "${hdir}"
+
+  echo ""
+  echo "  [session-context-hook]"
+
+  # No boulder → silent exit
+  run_test "session-hook: no boulder → exit 0" \
+    "echo '{}' | bash '${repo_root}/scripts/session-context-hook.sh'"
+
+  # With active boulder
+  bash "${repo_root}/scripts/boulder-init.sh" "hook test task" >/dev/null 2>&1
+
+  run_test_output "session-hook: active boulder → context output" \
+    "echo '{\"source\":\"resume\"}' | bash '${repo_root}/scripts/session-context-hook.sh'" \
+    "omo"
+
+  run_test_output "session-hook: output contains task slug" \
+    "echo '{\"source\":\"startup\"}' | bash '${repo_root}/scripts/session-context-hook.sh'" \
+    "hook-test-task"
+
+  run_test "session-hook: output is valid JSON" \
+    "echo '{\"source\":\"resume\"}' | bash '${repo_root}/scripts/session-context-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  # Clear source → no output
+  run_test "session-hook: clear source → no output" \
+    "output=\$(echo '{\"source\":\"clear\"}' | bash '${repo_root}/scripts/session-context-hook.sh'); [ -z \"\${output}\" ]"
+
+  echo ""
+  echo "  [idle-resume-hook]"
+
+  run_test_output "idle-hook: active boulder + idle_prompt → nudge" \
+    "echo '{\"notification_type\":\"idle_prompt\"}' | bash '${repo_root}/scripts/idle-resume-hook.sh'" \
+    "omo"
+
+  run_test "idle-hook: output is valid JSON" \
+    "echo '{\"notification_type\":\"idle_prompt\"}' | bash '${repo_root}/scripts/idle-resume-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  # Non-idle notification → silent
+  run_test "idle-hook: non-idle notification → no output" \
+    "output=\$(echo '{\"notification_type\":\"other\"}' | bash '${repo_root}/scripts/idle-resume-hook.sh'); [ -z \"\${output}\" ]"
+
+  # No boulder → silent
+  rm -f .claude/state/boulder.json
+
+  run_test "idle-hook: no boulder → no output" \
+    "output=\$(echo '{\"notification_type\":\"idle_prompt\"}' | bash '${repo_root}/scripts/idle-resume-hook.sh'); [ -z \"\${output}\" ]"
+
+  echo ""
+  echo "  [hooks.json validation]"
+
+  cd "${repo_root}"
+
+  run_test "hooks.json: exists" \
+    "[ -f hooks/hooks.json ]"
+
+  run_test "hooks.json: valid JSON" \
+    "python3 -c \"import json; json.load(open('hooks/hooks.json'))\""
+
+  run_test "hooks.json: has Stop event" \
+    "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert 'Stop' in d['hooks']\""
+
+  run_test "hooks.json: has SessionStart event" \
+    "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert 'SessionStart' in d['hooks']\""
+
+  run_test "hooks.json: has Notification event" \
+    "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert 'Notification' in d['hooks']\""
+
+  cd "${tmpdir}"
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -1213,6 +1470,8 @@ case "${section}" in
   quality)     run_skill_quality_tests ;;
   templates)   run_template_tests ;;
   config)      run_config_tests ;;
+  boulder)     run_boulder_tests ;;
+  hookscripts) run_hook_script_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -1225,10 +1484,12 @@ case "${section}" in
     run_skill_quality_tests
     run_template_tests
     run_config_tests
+    run_boulder_tests
+    run_hook_script_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, all"
     exit 1
     ;;
 esac

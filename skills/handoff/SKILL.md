@@ -18,5 +18,6 @@ Prepare a handoff for: $ARGUMENTS
    - verification run
    - blockers and risks
    - exact next step
-5. If `$ARGUMENTS` is present, use it as the preferred next step.
-6. Reply with the handoff path and the single best resume command or prompt.
+5. If an active Boulder exists, record the interruption: `bash scripts/boulder-attempt.sh interrupted`
+6. If `$ARGUMENTS` is present, use it as the preferred next step.
+7. Reply with the handoff path and the single best resume command or prompt.

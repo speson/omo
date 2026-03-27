@@ -47,6 +47,11 @@ The `.omo/` directory is separate from `.claude/state/` which holds runtime stat
   "spawn": {
     "max_concurrent_agents": 5
   },
+  "boulder": {
+    "enabled": true,
+    "max_attempts": 5,
+    "auto_resume": true
+  },
   "disabled_skills": []
 }
 ```
@@ -83,6 +88,16 @@ Valid models: `haiku`, `sonnet`, `opus`.
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `max_concurrent_agents` | integer | 5 | Maximum parallel agents (1-20) |
+
+### boulder
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | boolean | true | Enable Boulder persistent task tracking |
+| `max_attempts` | integer | 5 | Maximum attempts before Boulder gives up |
+| `auto_resume` | boolean | true | Automatically nudge task resume on session start and idle |
+
+Boulder provides cross-session task persistence. When enabled, tasks initialized with `boulder-init.sh` survive session restarts and are automatically restored via SessionStart and Notification hooks.
 
 ### disabled_skills
 

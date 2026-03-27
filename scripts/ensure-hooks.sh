@@ -2,6 +2,13 @@
 # Ensure the ralph-loop Stop hook is registered in .claude/settings.local.json
 set -eu
 
+# If plugin hooks file exists AND we're running in plugin context, hooks are auto-registered
+# Check via CLAUDE_PLUGIN_ROOT env var (set when loaded as a plugin)
+if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]; then
+  echo "[ensure-hooks] Plugin hooks detected. Stop hook auto-registered via hooks/hooks.json."
+  exit 0
+fi
+
 STATE_DIR=".claude"
 SETTINGS_FILE="${STATE_DIR}/settings.local.json"
 

@@ -41,7 +41,14 @@ For each `.sh` file in `scripts/`:
 2. Check the file has execute permission.
 3. If `shellcheck` is available, run it on each script and report warnings.
 
-Phase 5.5 — Config validation:
+Phase 5.5 — Hooks validation:
+
+1. Check if `hooks/hooks.json` exists.
+2. If it exists, verify it is valid JSON.
+3. Check that it defines `Stop`, `SessionStart`, and `Notification` hook events.
+4. Verify each hook command references a script that exists in `scripts/`.
+
+Phase 5.6 — Config validation:
 
 1. If `.omo/config.json` exists, run `bash scripts/validate-config.sh` and report the result.
 2. If `.omo/config.json` does not exist, report as SKIP (config is optional).
@@ -59,6 +66,7 @@ Versions:       PASS/FAIL (details if fail)
 Skills (N):     PASS/FAIL (details if fail)
 Agents (N):     PASS/FAIL (details if fail)
 Scripts (N):    PASS/FAIL (details if fail)
+Hooks:          PASS/FAIL/SKIP (details if fail)
 Config:         PASS/FAIL/SKIP (details if fail)
 
 Overall: PASS / FAIL (N issues)

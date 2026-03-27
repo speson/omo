@@ -131,6 +131,41 @@ else
 fi
 echo ""
 
+# ─── Hooks ────────────────────────────────────────────────────
+echo "Hooks:"
+if [ -d "hooks" ]; then
+  if [ -f "hooks/hooks.json" ]; then
+    if command -v jq >/dev/null 2>&1; then
+      if ! jq empty hooks/hooks.json 2>/dev/null; then
+        echo "  FAIL: hooks/hooks.json is not valid JSON"
+        errors=$((errors + 1))
+      else
+        echo "  OK: hooks/hooks.json is valid JSON"
+        # Verify expected hook events
+        for event in Stop SessionStart Notification; do
+          if ! jq -e ".hooks.${event}" hooks/hooks.json >/dev/null 2>&1; then
+            echo "  WARN: hooks/hooks.json missing '${event}' event"
+          fi
+        done
+      fi
+    elif command -v python3 >/dev/null 2>&1; then
+      if ! python3 -c "import json; json.load(open('hooks/hooks.json'))" 2>/dev/null; then
+        echo "  FAIL: hooks/hooks.json is not valid JSON"
+        errors=$((errors + 1))
+      else
+        echo "  OK: hooks/hooks.json is valid JSON"
+      fi
+    else
+      echo "  SKIP: no jq or python3 for JSON validation"
+    fi
+  else
+    echo "  WARN: hooks/ directory exists but hooks.json not found"
+  fi
+else
+  echo "  SKIP: no hooks/ directory (optional)"
+fi
+echo ""
+
 # ─── Scripts ─────────────────────────────────────────────────
 echo "Scripts:"
 for script in scripts/*.sh; do

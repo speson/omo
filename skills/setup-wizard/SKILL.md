@@ -11,10 +11,11 @@ Configure omo for this workspace. Arguments: $ARGUMENTS
 Phase 1 — Environment check:
 
 1. Detect plugin installation by checking whether skills/ and agents/ directories are accessible.
-2. Run `bash scripts/ensure-hooks.sh` to verify the ralph-loop Stop hook is registered. If the script registers the hook, report it. If it was already present, confirm.
-3. Run `bash scripts/mcp-doctor.sh` to check MCP configuration status.
-4. Check whether `.claude/state/` directory exists and is writable.
-5. Check whether `.omo/config.json` exists. If not, note it for Phase 2.
+2. Check if `hooks/hooks.json` exists (plugin-native hooks). If present, hooks are auto-registered.
+3. Run `bash scripts/ensure-hooks.sh` to verify the ralph-loop Stop hook is registered. If the script registers the hook, report it. If it was already present, confirm.
+4. Run `bash scripts/mcp-doctor.sh` to check MCP configuration status.
+5. Check whether `.claude/state/` directory exists and is writable.
+6. Check whether `.omo/config.json` exists. If not, note it for Phase 2.
 
 Phase 2 — Auto-fix:
 
@@ -31,6 +32,7 @@ Summarize in a table:
 |-----------|--------|-------------|
 
 Components to check:
+- Plugin hooks (hooks/hooks.json)
 - Stop hook (ralph-loop-guard.sh)
 - State directory (.claude/state/)
 - MCP configuration
