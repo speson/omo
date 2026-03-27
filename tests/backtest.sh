@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -1008,6 +1008,197 @@ run_template_tests() {
 }
 
 # ═════════════════════════════════════════════════════════════════
+# SECTION 11: Config system
+# ═════════════════════════════════════════════════════════════════
+run_config_tests() {
+  echo "Config system:"
+  echo "──────────────"
+
+  # Scripts resolve repo_root from their own location, so we create a
+  # self-contained mini-repo in the temp dir with copies of the scripts.
+  local cdir="${tmpdir}/config"
+  mkdir -p "${cdir}/scripts" "${cdir}/agents"
+  cp "${repo_root}/scripts/init-config.sh" "${cdir}/scripts/"
+  cp "${repo_root}/scripts/validate-config.sh" "${cdir}/scripts/"
+  cp "${repo_root}/scripts/read-config.sh" "${cdir}/scripts/"
+  cp "${repo_root}/scripts/apply-config.sh" "${cdir}/scripts/"
+  cp "${repo_root}/scripts/list-agents-by-category.sh" "${cdir}/scripts/"
+  chmod +x "${cdir}/scripts/"*.sh
+
+  cd "${cdir}"
+
+  echo ""
+  echo "  [init-config]"
+
+  run_test "init-config: creates .omo/config.json" \
+    "bash scripts/init-config.sh && [ -f .omo/config.json ]"
+
+  run_test "init-config: output is valid JSON" \
+    "python3 -c \"import json; json.load(open('.omo/config.json'))\""
+
+  run_test "init-config: has version field" \
+    "grep -q '\"version\"' .omo/config.json"
+
+  run_test "init-config: has categories" \
+    "grep -q '\"categories\"' .omo/config.json"
+
+  run_test "init-config: has ralph-loop settings" \
+    "grep -q '\"ralph-loop\"' .omo/config.json"
+
+  run_test "init-config: has spawn settings" \
+    "grep -q '\"spawn\"' .omo/config.json"
+
+  run_test_output "init-config: no --force → already exists" \
+    "bash scripts/init-config.sh" \
+    "already exists"
+
+  run_test_output "init-config: --force overwrites" \
+    "bash scripts/init-config.sh --force" \
+    "overwritten"
+
+  echo ""
+  echo "  [validate-config]"
+
+  run_test "validate-config: default config passes" \
+    "bash scripts/validate-config.sh"
+
+  run_test_output "validate-config: shows PASS" \
+    "bash scripts/validate-config.sh" \
+    "PASS"
+
+  # Invalid JSON
+  local cdir2="${tmpdir}/config-bad"
+  mkdir -p "${cdir2}/scripts"
+  cp "${cdir}/scripts/validate-config.sh" "${cdir2}/scripts/"
+  chmod +x "${cdir2}/scripts/validate-config.sh"
+  mkdir -p "${cdir2}/.omo"
+  echo "not json" > "${cdir2}/.omo/config.json"
+
+  run_test_fail "validate-config: invalid JSON → fail" \
+    "cd '${cdir2}' && bash scripts/validate-config.sh"
+
+  # No config file
+  local cdir3="${tmpdir}/config-none"
+  mkdir -p "${cdir3}/scripts"
+  cp "${cdir}/scripts/validate-config.sh" "${cdir3}/scripts/"
+  cp "${cdir}/scripts/read-config.sh" "${cdir3}/scripts/"
+  chmod +x "${cdir3}/scripts/"*.sh
+
+  run_test "validate-config: no config → exit 0" \
+    "cd '${cdir3}' && bash scripts/validate-config.sh"
+
+  cd "${cdir}"
+
+  echo ""
+  echo "  [read-config]"
+
+  run_test_output "read-config: reads category model" \
+    "bash scripts/read-config.sh categories.fast-search.model haiku" \
+    "haiku"
+
+  run_test_output "read-config: reads max_iterations" \
+    "bash scripts/read-config.sh ralph-loop.max_iterations 100" \
+    "100"
+
+  run_test_output "read-config: reads spawn max" \
+    "bash scripts/read-config.sh spawn.max_concurrent_agents 5" \
+    "5"
+
+  run_test_output "read-config: missing key → default" \
+    "bash scripts/read-config.sh nonexistent.key fallback" \
+    "fallback"
+
+  # No config file → default
+  run_test_output "read-config: no config → default" \
+    "cd '${cdir3}' && bash scripts/read-config.sh categories.fast-search.model haiku" \
+    "haiku"
+
+  cd "${cdir}"
+
+  echo ""
+  echo "  [apply-config]"
+
+  # Set up a test agent for apply-config
+  cat > agents/test-agent.md <<'AGENTEOF'
+---
+name: test-agent
+description: test agent
+tools: Read
+model: sonnet
+category: fast-search
+maxTurns: 5
+---
+You are a test agent.
+AGENTEOF
+
+  run_test_output "apply-config: --dry-run shows changes" \
+    "bash scripts/apply-config.sh --dry-run" \
+    "haiku"
+
+  run_test "apply-config: --dry-run does not modify files" \
+    "grep -q '^model: sonnet' agents/test-agent.md"
+
+  run_test "apply-config: apply changes model" \
+    "bash scripts/apply-config.sh && grep -q '^model: haiku' agents/test-agent.md"
+
+  echo ""
+  echo "  [list-agents-by-category]"
+
+  cd "${repo_root}"
+
+  run_test "list-agents: runs without error" \
+    "bash scripts/list-agents-by-category.sh"
+
+  run_test_output "list-agents: shows fast-search" \
+    "bash scripts/list-agents-by-category.sh" \
+    "fast-search"
+
+  run_test_output "list-agents: filter by category" \
+    "bash scripts/list-agents-by-category.sh planning" \
+    "planner-sisyphus"
+
+  run_test_fail "list-agents: invalid category → fail" \
+    "bash scripts/list-agents-by-category.sh nonexistent-category"
+
+  echo ""
+  echo "  [round-trip pipeline]"
+
+  local cdir4="${tmpdir}/config-roundtrip"
+  mkdir -p "${cdir4}/scripts" "${cdir4}/agents"
+  cp "${cdir}/scripts/"*.sh "${cdir4}/scripts/"
+  chmod +x "${cdir4}/scripts/"*.sh
+  cat > "${cdir4}/agents/roundtrip-agent.md" <<'AGENTEOF'
+---
+name: roundtrip-agent
+description: roundtrip test
+tools: Read
+model: sonnet
+category: fast-search
+maxTurns: 5
+---
+Test agent.
+AGENTEOF
+
+  run_test "round-trip: init → validate → apply-dry-run" \
+    "cd '${cdir4}' && bash scripts/init-config.sh && \
+     bash scripts/validate-config.sh && \
+     bash scripts/apply-config.sh --dry-run"
+
+  echo ""
+  echo "  [agent category field presence]"
+
+  cd "${repo_root}"
+  for agent_file in agents/*.md; do
+    agent_name=$(basename "${agent_file}" .md)
+    run_test "agent/${agent_name}: has category field" \
+      "grep -q '^category:' '${agent_file}'"
+  done
+
+  cd "${tmpdir}"
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -1021,6 +1212,7 @@ case "${section}" in
   misc)        run_misc_tests ;;
   quality)     run_skill_quality_tests ;;
   templates)   run_template_tests ;;
+  config)      run_config_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -1032,10 +1224,11 @@ case "${section}" in
     run_misc_tests
     run_skill_quality_tests
     run_template_tests
+    run_config_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, all"
     exit 1
     ;;
 esac

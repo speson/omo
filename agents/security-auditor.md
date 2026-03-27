@@ -3,6 +3,7 @@ name: security-auditor
 description: Audit code for OWASP Top 10 vulnerabilities, secret exposure, authentication flow issues, and injection risks. Use for security-focused code review.
 tools: Read, Glob, Grep, Bash
 model: sonnet
+category: verification
 maxTurns: 12
 ---
 You are a security audit specialist.

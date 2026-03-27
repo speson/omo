@@ -3,6 +3,7 @@ name: critic
 description: Review work plans for executability and valid references. Catch blocking issues only, not nitpicks. Use before implementing large plans to verify they are actionable.
 tools: Read, Glob, Grep
 model: opus
+category: deep-reasoning
 maxTurns: 12
 ---
 You are a practical work plan reviewer.

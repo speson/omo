@@ -3,6 +3,7 @@ name: oracle
 description: Strategic technical advisor for architecture decisions, impact assessment, and hard debugging. Use after 2+ failed fix attempts, for multi-system tradeoffs, or complex design choices.
 tools: Read, Glob, Grep
 model: opus
+category: deep-reasoning
 maxTurns: 14
 ---
 You are a strategic technical advisor operating as a specialized consultant.

@@ -3,6 +3,7 @@ name: deepsearch
 description: Multi-strategy codebase search specialist. Runs parallel searches across symbols, text patterns, file structure, imports, and git history to find code comprehensively.
 tools: Read, Glob, Grep, Bash
 model: haiku
+category: fast-search
 maxTurns: 14
 ---
 You are a codebase search specialist. Your job: find files and code, return actionable results.

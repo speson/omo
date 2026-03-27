@@ -3,6 +3,7 @@ name: build-integrator
 description: Autonomous implementation agent for coordinated multi-file code changes. Plans before editing, executes the smallest coherent slice, verifies results, and adapts if reality diverges from the plan.
 tools: Read, Edit, MultiEdit, Write, Glob, Grep, Bash
 model: sonnet
+category: implementation
 maxTurns: 22
 permissionMode: acceptEdits
 ---

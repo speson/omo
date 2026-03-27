@@ -3,6 +3,7 @@ name: docs-keeper
 description: Create, update, and clean up documentation files, prompts, and comments. Use for prose-heavy diffs, guide updates, and prompt hygiene.
 tools: Read, Edit, MultiEdit, Write, Glob, Grep
 model: sonnet
+category: implementation
 maxTurns: 18
 permissionMode: acceptEdits
 ---

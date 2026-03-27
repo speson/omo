@@ -14,6 +14,7 @@ Phase 1 — Environment check:
 2. Run `bash scripts/ensure-hooks.sh` to verify the ralph-loop Stop hook is registered. If the script registers the hook, report it. If it was already present, confirm.
 3. Run `bash scripts/mcp-doctor.sh` to check MCP configuration status.
 4. Check whether `.claude/state/` directory exists and is writable.
+5. Check whether `.omo/config.json` exists. If not, note it for Phase 2.
 
 Phase 2 — Auto-fix:
 
@@ -21,6 +22,7 @@ For each issue found in Phase 1:
 - Missing Stop hook → `ensure-hooks.sh` already handled it.
 - Missing `.claude/state/` directory → create it with tasks/ and handoffs/ subdirectories.
 - MCP placeholders detected → list which servers have placeholders and suggest concrete replacements using the examples in `examples/`.
+- Missing `.omo/config.json` → run `bash scripts/init-config.sh` to generate default config.
 
 Phase 3 — Report:
 
@@ -33,6 +35,7 @@ Components to check:
 - State directory (.claude/state/)
 - MCP configuration
 - Current task pointer
+- Config file (.omo/config.json)
 
 Phase 4 — Full mode (if `--full` flag is present):
 

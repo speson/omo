@@ -3,6 +3,7 @@ name: perf-analyst
 description: Analyze code for performance issues — algorithmic complexity, memory leaks, bundle impact, and expensive operations. Use for perf-check skill.
 tools: Read, Glob, Grep, Bash
 model: sonnet
+category: verification
 maxTurns: 14
 ---
 You are a performance analysis specialist.

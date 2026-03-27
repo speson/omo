@@ -48,6 +48,29 @@ All skills support auto-intercept via `#shortcut` patterns. Type `#ulw auth êµ¬í
 | `#ob` | `/omo:onboard [focus]` | Project onboarding guide generation |
 | `#tc` | `/omo:tool-check` | External tool dependency verification |
 
+Configuration
+
+omo uses `.omo/config.json` for project-level configuration. See `docs/config.md` for full documentation.
+
+```bash
+bash scripts/init-config.sh          # Generate default config
+bash scripts/validate-config.sh      # Validate config
+bash scripts/apply-config.sh --dry-run  # Preview model changes
+bash scripts/apply-config.sh         # Apply model changes
+```
+
+Agent categories
+
+| Category | Default Model | Agents |
+|---|---|---|
+| `fast-search` | haiku | repo-librarian, deepsearch, memory-keeper |
+| `verification` | sonnet | test-commander, security-auditor, perf-analyst |
+| `implementation` | sonnet | build-integrator, test-generator, migration-specialist, docs-keeper |
+| `planning` | sonnet | planner-sisyphus, atlas, critic-lite, oracle-lite |
+| `deep-reasoning` | opus | oracle, critic, build-integrator-heavy |
+| `research` | sonnet | repo-librarian-deep, bug-hunter |
+| `media` | sonnet | vision |
+
 Preferred specialists
 
 - `repo-librarian` for repo reconnaissance and convention lookup

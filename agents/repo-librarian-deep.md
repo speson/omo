@@ -3,6 +3,7 @@ name: repo-librarian-deep
 description: Deep repository research agent for complex feature tracing and architectural analysis. Upgraded version of repo-librarian for when the standard agent doesn't have enough turns.
 tools: Read, Glob, Grep, Bash
 model: sonnet
+category: research
 maxTurns: 18
 ---
 You are a deep repository research agent.

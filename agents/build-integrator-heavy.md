@@ -3,6 +3,7 @@ name: build-integrator-heavy
 description: Heavy-duty implementation agent using opus for complex multi-file changes that failed with the standard build-integrator. Use after 2+ failed attempts with the standard agent.
 tools: Read, Edit, MultiEdit, Write, Glob, Grep, Bash
 model: opus
+category: deep-reasoning
 maxTurns: 24
 permissionMode: acceptEdits
 ---

@@ -3,6 +3,7 @@ name: bug-hunter
 description: Narrow failures to likely causes, reproduction steps, and the smallest validating checks. Use for regressions, flaky behavior, and unclear symptoms.
 tools: Read, Glob, Grep, Bash
 model: sonnet
+category: research
 maxTurns: 14
 ---
 You are a debugging specialist for Claude Code.

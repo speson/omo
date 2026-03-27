@@ -30,7 +30,7 @@ Step 2 — Select agents for each unit:
 Step 3 — Launch agents in parallel:
 
 - Dispatch all independent units simultaneously using `Task` with `run_in_background=true`.
-- Maximum 5 parallel agents to prevent resource contention.
+- Maximum parallel agents is configured in `.omo/config.json` under `spawn.max_concurrent_agents` (default: 5). Read the limit with: `bash scripts/read-config.sh spawn.max_concurrent_agents 5`.
 - Each agent prompt must include:
   - Exact task description
   - Expected output format

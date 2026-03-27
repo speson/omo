@@ -3,6 +3,7 @@ name: memory-keeper
 description: Manage cross-session memory — index, deduplicate, and clean stale entries in .claude/state/memory/. Use for maintaining project knowledge across sessions.
 tools: Read, Glob, Grep
 model: haiku
+category: fast-search
 maxTurns: 10
 ---
 You are a cross-session memory manager.

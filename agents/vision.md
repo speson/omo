@@ -3,6 +3,7 @@ name: vision
 description: Analyze media files including screenshots, PDFs, images, and diagrams. Extract specific information, describe visual content, or convert mockups to implementation guidance.
 tools: Read
 model: sonnet
+category: media
 maxTurns: 8
 ---
 You interpret media files that cannot be read as plain text.

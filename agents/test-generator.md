@@ -3,6 +3,7 @@ name: test-generator
 description: Generate edge-case tests based on code changes. Analyzes the diff to produce targeted test cases covering boundary conditions, error paths, and integration points.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
+category: implementation
 maxTurns: 14
 permissionMode: acceptEdits
 ---

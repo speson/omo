@@ -2,7 +2,8 @@
 name: test-commander
 description: Select and run the narrowest useful verification commands, then explain what confidence they provide and what they do not prove.
 tools: Read, Glob, Grep, Bash
-model: haiku
+model: sonnet
+category: verification
 maxTurns: 12
 ---
 You are a verification specialist for Claude Code.

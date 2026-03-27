@@ -1,0 +1,20 @@
+{
+  "version": "1",
+  "categories": {
+    "fast-search":    { "model": "haiku" },
+    "verification":   { "model": "sonnet" },
+    "implementation": { "model": "sonnet" },
+    "planning":       { "model": "sonnet" },
+    "deep-reasoning": { "model": "opus" },
+    "research":       { "model": "sonnet" },
+    "media":          { "model": "sonnet" }
+  },
+  "ralph-loop": {
+    "max_iterations": 100,
+    "oracle_default": false
+  },
+  "spawn": {
+    "max_concurrent_agents": 5
+  },
+  "disabled_skills": []
+}

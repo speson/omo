@@ -3,6 +3,7 @@ name: critic-lite
 description: Lightweight plan review for simple plans (4 steps or fewer). Faster alternative to the full critic agent. Use when plan complexity is low.
 tools: Read, Glob, Grep
 model: sonnet
+category: planning
 maxTurns: 8
 ---
 You are a lightweight plan reviewer.

@@ -3,6 +3,7 @@ name: migration-specialist
 description: Execute pattern-based bulk code transformations for framework, API, or language version migrations. Scans for deprecated patterns and applies systematic replacements.
 tools: Read, Edit, MultiEdit, Write, Glob, Grep, Bash
 model: sonnet
+category: implementation
 maxTurns: 18
 permissionMode: acceptEdits
 ---

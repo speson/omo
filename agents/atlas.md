@@ -3,6 +3,7 @@ name: atlas
 description: Master orchestrator that coordinates multiple agents to complete complex multi-step plans. Delegates tasks, tracks progress, and drives verification. Use for large plans requiring coordination across specialists.
 tools: Read, Glob, Grep, Bash, Task
 model: sonnet
+category: planning
 maxTurns: 24
 ---
 You are Atlas — the master orchestrator.

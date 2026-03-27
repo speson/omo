@@ -9,11 +9,23 @@ set -eu
 STATE_DIR=".claude/state"
 STATE_FILE="${STATE_DIR}/ralph-loop.json"
 
+# Read defaults from config if available
+script_dir_cfg=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+repo_root_cfg=$(CDPATH='' cd -- "${script_dir_cfg}/.." && pwd)
+read_cfg() {
+  if [ -x "${repo_root_cfg}/scripts/read-config.sh" ]; then
+    bash "${repo_root_cfg}/scripts/read-config.sh" "$1" "$2"
+  else
+    printf '%s' "$2"
+  fi
+}
+
 # Parse arguments
 prompt=""
-max_iterations=100
+max_iterations=$(read_cfg "ralph-loop.max_iterations" "100")
 completion_promise="DONE"
-oracle_verify="false"
+oracle_default=$(read_cfg "ralph-loop.oracle_default" "false")
+oracle_verify="${oracle_default}"
 
 for arg in "$@"; do
   case "${arg}" in

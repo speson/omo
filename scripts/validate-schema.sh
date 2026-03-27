@@ -85,8 +85,50 @@ for agent_file in agents/*.md; do
     haiku|sonnet|opus) ;;
     *) echo "  FAIL: ${agent_name} invalid model '${model}'"; errors=$((errors + 1)) ;;
   esac
+
+  # Valid category
+  category=$(grep '^category:' "${agent_file}" | head -1 | sed 's/^category:[[:space:]]*//' || true)
+  if [ -n "${category}" ]; then
+    case "${category}" in
+      fast-search|verification|implementation|planning|deep-reasoning|research|media) ;;
+      *) echo "  FAIL: ${agent_name} invalid category '${category}'"; errors=$((errors + 1)) ;;
+    esac
+  else
+    echo "  WARN: ${agent_name} missing category field"
+  fi
 done
 echo "  Checked $(ls agents/*.md | wc -l | tr -d ' ') agents"
+echo ""
+
+# ─── Config (.omo/config.json) ──────────────────────────────
+echo "Config:"
+if [ -f ".omo/config.json" ]; then
+  if command -v jq >/dev/null 2>&1; then
+    if ! jq empty .omo/config.json 2>/dev/null; then
+      echo "  FAIL: .omo/config.json is not valid JSON"
+      errors=$((errors + 1))
+    else
+      echo "  OK: valid JSON"
+      # Check version field
+      cfg_version=$(jq -r '.version // empty' .omo/config.json)
+      if [ "${cfg_version}" != "1" ]; then
+        echo "  FAIL: config version should be \"1\", got \"${cfg_version}\""
+        errors=$((errors + 1))
+      fi
+    fi
+  elif command -v python3 >/dev/null 2>&1; then
+    if ! python3 -c "import json; json.load(open('.omo/config.json'))" 2>/dev/null; then
+      echo "  FAIL: .omo/config.json is not valid JSON"
+      errors=$((errors + 1))
+    else
+      echo "  OK: valid JSON"
+    fi
+  else
+    echo "  SKIP: no jq or python3 for JSON validation"
+  fi
+else
+  echo "  SKIP: no .omo/config.json (optional)"
+fi
 echo ""
 
 # ─── Scripts ─────────────────────────────────────────────────

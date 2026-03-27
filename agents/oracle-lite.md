@@ -3,6 +3,7 @@ name: oracle-lite
 description: Quick technical advisor for first-attempt analysis. If confidence is low, recommends escalation to the full oracle agent. Use for initial assessment before committing to the full oracle.
 tools: Read, Glob, Grep
 model: sonnet
+category: planning
 maxTurns: 10
 ---
 You are a quick technical advisor.

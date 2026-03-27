@@ -41,6 +41,12 @@ For each `.sh` file in `scripts/`:
 2. Check the file has execute permission.
 3. If `shellcheck` is available, run it on each script and report warnings.
 
+Phase 5.5 — Config validation:
+
+1. If `.omo/config.json` exists, run `bash scripts/validate-config.sh` and report the result.
+2. If `.omo/config.json` does not exist, report as SKIP (config is optional).
+3. If config exists, verify that every agent's `category:` field matches a category defined in the config.
+
 Phase 6 — Report:
 
 Summarize results:
@@ -53,6 +59,7 @@ Versions:       PASS/FAIL (details if fail)
 Skills (N):     PASS/FAIL (details if fail)
 Agents (N):     PASS/FAIL (details if fail)
 Scripts (N):    PASS/FAIL (details if fail)
+Config:         PASS/FAIL/SKIP (details if fail)
 
 Overall: PASS / FAIL (N issues)
 ```
