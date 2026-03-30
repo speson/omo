@@ -1,4 +1,4 @@
-# omo 플러그인 v1.0.0 — 상세 유저 플로우 가이드
+# omo 플러그인 — 상세 유저 플로우 가이드
 
 > 스킬 목록, 에이전트 소개, 설치 방법 등 기본 정보는 [README](../README.md)를 참고하세요.
 > 이 문서는 각 기능의 **내부 동작과 유저 플로우**를 상세히 설명합니다.
@@ -20,7 +20,7 @@
 }
 ```
 
-### 스크립트 20개
+### 스크립트 37개
 
 | 스크립트 | 용도 |
 |---------|------|
@@ -60,7 +60,8 @@
 │   └── index.md            <- 자동 생성 인덱스
 ├── task-history.log        <- 태스크 이력 로그
 ├── repo-map.md             <- 레포지토리 맵
-└── ralph-loop.json         <- Ralph Loop 상태 머신
+├── ralph-loop.json         <- Ralph Loop 상태 머신
+└── boulder.json            <- Boulder 크로스세션 태스크 상태
 ```
 
 ---
@@ -87,7 +88,7 @@
    ├─ Actual need: 인증 흐름 수정하려고 시작점 찾는 중
    └─ Success: 파일 경로 + 흐름 설명
 
-2) 5개 전략 병렬 실행 (deepsearch 에이전트, haiku)
+2) 5개 전략 병렬 실행 (deepsearch 에이전트, sonnet)
    ├─ Symbol search: grep "auth" "middleware" 함수/클래스명
    ├─ Text search: grep "authenticate" "verify" "token"
    ├─ File pattern: glob "**/auth*" "**/middleware*"

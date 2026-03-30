@@ -58,6 +58,8 @@ All skills support auto-intercept via `#shortcut` patterns. Type `#ulw auth êµ¬í
 | `#pr` | `/omo:pr-review [pr-number]` | Comprehensive GitHub PR review |
 | `#ob` | `/omo:onboard [focus]` | Project onboarding guide generation |
 | `#tc` | `/omo:tool-check` | External tool dependency verification |
+| `#rel` | `/omo:release <version>` | Full release pipeline (commit, push, tag, release, marketplace) |
+| `#sync` | `/omo:docs-sync [scope]` | Sync README and user guide with current project state |
 
 Configuration
 
