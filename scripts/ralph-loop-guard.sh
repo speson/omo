@@ -49,6 +49,8 @@ if [ "${phase}" = "verified" ]; then
   iteration_count="${iteration}"
   rm -f "${STATE_FILE}"
   echo "[Ralph Loop] Complete after ${iteration_count} iteration(s)."
+  script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+  bash "${script_dir}/notify.sh" "omo" "Ralph Loop complete (${iteration_count} iterations)" 2>/dev/null || true
   exit 0
 fi
 

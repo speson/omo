@@ -39,3 +39,10 @@ else
 fi
 
 echo "[Boulder] Completed: ${slug} after ${attempts} attempt(s)"
+
+# Notify if configured
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+notify=$(bash "${script_dir}/read-config.sh" teams.notify_on_completion true 2>/dev/null || echo "true")
+if [ "${notify}" = "true" ]; then
+  bash "${script_dir}/notify.sh" "omo" "Boulder completed: ${slug}" 2>/dev/null || true
+fi

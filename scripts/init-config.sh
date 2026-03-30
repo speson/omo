@@ -52,6 +52,12 @@ if command -v jq >/dev/null 2>&1; then
       "max_attempts": 5,
       "auto_resume": true
     },
+    "teams": {
+      "enabled": true,
+      "max_teammates": 8,
+      "auto_escalation": true,
+      "notify_on_completion": true
+    },
     "disabled_skills": []
   }' > "${config_file}"
 else
@@ -78,6 +84,12 @@ else
     "enabled": true,
     "max_attempts": 5,
     "auto_resume": true
+  },
+  "teams": {
+    "enabled": true,
+    "max_teammates": 8,
+    "auto_escalation": true,
+    "notify_on_completion": true
   },
   "disabled_skills": []
 }

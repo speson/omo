@@ -52,6 +52,12 @@ The `.omo/` directory is separate from `.claude/state/` which holds runtime stat
     "max_attempts": 5,
     "auto_resume": true
   },
+  "teams": {
+    "enabled": true,
+    "max_teammates": 8,
+    "auto_escalation": true,
+    "notify_on_completion": true
+  },
   "disabled_skills": []
 }
 ```
@@ -98,6 +104,17 @@ Valid models: `haiku`, `sonnet`, `opus`.
 | `auto_resume` | boolean | true | Automatically nudge task resume on session start and idle |
 
 Boulder provides cross-session task persistence. When enabled, tasks initialized with `boulder-init.sh` survive session restarts and are automatically restored via SessionStart and Notification hooks.
+
+### teams
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | boolean | true | Enable agent-team coordination features |
+| `max_teammates` | integer | 8 | Maximum teammates per team (1-20) |
+| `auto_escalation` | boolean | true | Auto-escalate to oracle after repeated subagent failures |
+| `notify_on_completion` | boolean | true | Send OS notification when team tasks complete |
+
+Teams enables multi-agent coordination via Claude Code's TeamCreate/SendMessage API. When enabled, Atlas and Spawn skills use persistent teams with shared task lists instead of fire-and-forget subagents.
 
 ### disabled_skills
 

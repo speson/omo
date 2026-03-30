@@ -32,6 +32,38 @@ Injects Boulder task context on session start or resume. Skipped for `clear` sou
 
 Nudges the user to resume a pending Boulder task when idle. Only fires if `auto_resume` is enabled in the Boulder state.
 
+### SubagentStop
+
+**Script:** `scripts/subagent-stop-hook.sh`
+**Matcher:** `""` (all subagent stops)
+**Timeout:** 10 seconds
+
+Fires when a subagent completes or fails. Checks for escalation signals (low confidence, repeated failures). If `teams.auto_escalation` is enabled and the subagent reports escalation need, logs the event and recommends oracle escalation. Also records the outcome in Boulder state if a boulder task is active.
+
+### TeammateIdle
+
+**Script:** `scripts/teammate-idle-hook.sh`
+**Matcher:** `""` (all teammate idle events)
+**Timeout:** 5 seconds
+
+Fires when a teammate in an agent-team goes idle. Checks the team's task list for unblocked pending tasks and suggests assignment. Helps the team lead keep work flowing without manual polling.
+
+### TaskCompleted
+
+**Script:** `scripts/task-completed-hook.sh`
+**Matcher:** `""` (all task completions)
+**Timeout:** 5 seconds
+
+Fires when a task in a team's task list is marked completed. If `teams.notify_on_completion` is enabled, triggers an OS notification via `notify.sh`. Also checks if the completed task unblocks other tasks and summarizes what's now available.
+
+### PreCompact
+
+**Script:** `scripts/pre-compact-hook.sh`
+**Matcher:** `""` (all compact events)
+**Timeout:** 10 seconds
+
+Fires before context compaction. Injects critical state into the system message so it survives compaction: active Boulder task, current task file, recent handoff notes, and team status. Uses `systemMessage` output field instead of `additionalContext`.
+
 ## Hook Input/Output
 
 All hooks receive JSON via stdin:

@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -1456,6 +1456,108 @@ run_hook_script_tests() {
 }
 
 # ═════════════════════════════════════════════════════════════════
+# SECTION 14: Team hook scripts
+# ═════════════════════════════════════════════════════════════════
+run_team_hook_tests() {
+  echo "Team hook scripts:"
+  echo "──────────────────"
+
+  local thdir="${tmpdir}/teamhooktest"
+  mkdir -p "${thdir}/.claude/state"
+  cd "${thdir}"
+
+  echo ""
+  echo "  [subagent-stop-hook]"
+
+  # No boulder, no briefings → silent exit
+  run_test "subagent-stop-hook: no boulder → exit 0" \
+    "echo '{}' | bash '${repo_root}/scripts/subagent-stop-hook.sh'"
+
+  # With boulder active
+  CLAUDE_PROJECT_DIR="${thdir}" bash "${repo_root}/scripts/boulder-init.sh" "team hook test" >/dev/null 2>&1
+
+  run_test "subagent-stop-hook: active boulder → exit 0" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${thdir}' bash '${repo_root}/scripts/subagent-stop-hook.sh'"
+
+  echo ""
+  echo "  [teammate-idle-hook]"
+
+  run_test "teammate-idle-hook: basic → outputs JSON" \
+    "echo '{}' | bash '${repo_root}/scripts/teammate-idle-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test_output "teammate-idle-hook: output contains omo tag" \
+    "echo '{\"teammate_name\":\"worker1\"}' | bash '${repo_root}/scripts/teammate-idle-hook.sh'" \
+    "omo"
+
+  # Teams disabled → silent
+  mkdir -p "${thdir}/.omo"
+  cat > "${thdir}/.omo/config.json" <<'CFGEOF'
+{"version":"1","categories":{"fast-search":{"model":"haiku"}},"teams":{"enabled":false}}
+CFGEOF
+
+  run_test "teammate-idle-hook: teams disabled → no output" \
+    "output=\$(echo '{}' | CLAUDE_PROJECT_DIR='${thdir}' bash '${repo_root}/scripts/teammate-idle-hook.sh'); [ -z \"\${output}\" ]"
+
+  rm -rf "${thdir}/.omo"
+
+  echo ""
+  echo "  [task-completed-hook]"
+
+  run_test "task-completed-hook: basic → outputs JSON" \
+    "echo '{}' | bash '${repo_root}/scripts/task-completed-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test_output "task-completed-hook: output contains omo tag" \
+    "echo '{\"task_subject\":\"Fix bug\"}' | bash '${repo_root}/scripts/task-completed-hook.sh'" \
+    "omo"
+
+  echo ""
+  echo "  [pre-compact-hook]"
+
+  # No state → silent
+  rm -f "${thdir}/.claude/state/boulder.json" "${thdir}/.claude/state/current-task.txt"
+
+  run_test "pre-compact-hook: no state → exit 0 silent" \
+    "output=\$(echo '{}' | CLAUDE_PROJECT_DIR='${thdir}' bash '${repo_root}/scripts/pre-compact-hook.sh'); [ -z \"\${output}\" ]"
+
+  # With boulder
+  CLAUDE_PROJECT_DIR="${thdir}" bash "${repo_root}/scripts/boulder-init.sh" "compact test" >/dev/null 2>&1
+
+  run_test "pre-compact-hook: active boulder → outputs JSON" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${thdir}' bash '${repo_root}/scripts/pre-compact-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test_output "pre-compact-hook: output contains systemMessage" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${thdir}' bash '${repo_root}/scripts/pre-compact-hook.sh'" \
+    "systemMessage"
+
+  # With current-task.txt
+  echo "/some/task.md" > "${thdir}/.claude/state/current-task.txt"
+
+  run_test_output "pre-compact-hook: includes current task" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${thdir}' bash '${repo_root}/scripts/pre-compact-hook.sh'" \
+    "task"
+
+  echo ""
+  echo "  [hooks.json new events]"
+
+  cd "${repo_root}"
+
+  run_test "hooks.json: has SubagentStop event" \
+    "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert 'SubagentStop' in d['hooks']\""
+
+  run_test "hooks.json: has TeammateIdle event" \
+    "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert 'TeammateIdle' in d['hooks']\""
+
+  run_test "hooks.json: has TaskCompleted event" \
+    "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert 'TaskCompleted' in d['hooks']\""
+
+  run_test "hooks.json: has PreCompact event" \
+    "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert 'PreCompact' in d['hooks']\""
+
+  cd "${tmpdir}"
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -1472,6 +1574,7 @@ case "${section}" in
   config)      run_config_tests ;;
   boulder)     run_boulder_tests ;;
   hookscripts) run_hook_script_tests ;;
+  teamhooks) run_team_hook_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -1486,10 +1589,11 @@ case "${section}" in
     run_config_tests
     run_boulder_tests
     run_hook_script_tests
+    run_team_hook_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, all"
     exit 1
     ;;
 esac

@@ -229,6 +229,59 @@ if [ -n "${boulder_auto}" ] && [ "${boulder_auto}" != "null" ]; then
   esac
 fi
 
+# ─── teams.enabled ────────────────────────────────────────────────────────────
+teams_enabled=$(json_get '.teams.enabled')
+if [ -n "${teams_enabled}" ] && [ "${teams_enabled}" != "null" ]; then
+  case "${teams_enabled}" in
+    true|false) ;;
+    *)
+      echo "  ERROR: teams.enabled must be boolean, got '${teams_enabled}'"
+      errors=$((errors + 1))
+      ;;
+  esac
+fi
+
+# ─── teams.max_teammates ─────────────────────────────────────────────────────
+teams_max=$(json_get '.teams.max_teammates')
+if [ -n "${teams_max}" ] && [ "${teams_max}" != "null" ]; then
+  case "${teams_max}" in
+    ''|*[!0-9]*)
+      echo "  ERROR: teams.max_teammates must be a positive integer (1-20), got '${teams_max}'"
+      errors=$((errors + 1))
+      ;;
+    *)
+      if [ "${teams_max}" -lt 1 ] || [ "${teams_max}" -gt 20 ]; then
+        echo "  ERROR: teams.max_teammates must be 1-20, got ${teams_max}"
+        errors=$((errors + 1))
+      fi
+      ;;
+  esac
+fi
+
+# ─── teams.auto_escalation ───────────────────────────────────────────────────
+teams_esc=$(json_get '.teams.auto_escalation')
+if [ -n "${teams_esc}" ] && [ "${teams_esc}" != "null" ]; then
+  case "${teams_esc}" in
+    true|false) ;;
+    *)
+      echo "  ERROR: teams.auto_escalation must be boolean, got '${teams_esc}'"
+      errors=$((errors + 1))
+      ;;
+  esac
+fi
+
+# ─── teams.notify_on_completion ──────────────────────────────────────────────
+teams_notify=$(json_get '.teams.notify_on_completion')
+if [ -n "${teams_notify}" ] && [ "${teams_notify}" != "null" ]; then
+  case "${teams_notify}" in
+    true|false) ;;
+    *)
+      echo "  ERROR: teams.notify_on_completion must be boolean, got '${teams_notify}'"
+      errors=$((errors + 1))
+      ;;
+  esac
+fi
+
 # ─── disabled_skills ─────────────────────────────────────────────────────────
 ds_type=$(json_get '.disabled_skills | type' 2>/dev/null || true)
 if [ -n "${ds_type}" ] && [ "${ds_type}" != "null" ] && [ "${ds_type}" != "array" ]; then

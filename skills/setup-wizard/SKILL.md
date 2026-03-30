@@ -16,6 +16,7 @@ Phase 1 — Environment check:
 4. Run `bash scripts/mcp-doctor.sh` to check MCP configuration status.
 5. Check whether `.claude/state/` directory exists and is writable.
 6. Check whether `.omo/config.json` exists. If not, note it for Phase 2.
+7. Check if agent-teams are enabled: verify `teams.enabled` in `.omo/config.json` and `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env var.
 
 Phase 2 — Auto-fix:
 
@@ -38,6 +39,7 @@ Components to check:
 - MCP configuration
 - Current task pointer
 - Config file (.omo/config.json)
+- Agent teams (teams.enabled + env var)
 
 Phase 4 — Full mode (if `--full` flag is present):
 

@@ -103,6 +103,10 @@ omo registers lifecycle hooks via `hooks/hooks.json` (plugin-native). The hooks 
 | `Stop` | Every stop attempt | `ralph-loop-guard.sh` | Block premature stop during Ralph Loop |
 | `SessionStart` | Session start/resume | `session-context-hook.sh` | Inject Boulder task context |
 | `Notification` | Idle prompt | `idle-resume-hook.sh` | Nudge Boulder task resume |
+| `SubagentStop` | Subagent completes | `subagent-stop-hook.sh` | Auto-escalation on low confidence |
+| `TeammateIdle` | Teammate goes idle | `teammate-idle-hook.sh` | Suggest pending task assignment |
+| `TaskCompleted` | Task marked done | `task-completed-hook.sh` | OS notification + unblock check |
+| `PreCompact` | Before compaction | `pre-compact-hook.sh` | Preserve critical state in system message |
 
 For manual hook registration (without plugin install), run `bash scripts/ensure-hooks.sh`.
 
@@ -119,6 +123,17 @@ Boulder tracks task state across sessions. When a task is initialized with `boul
 | `boulder-status.sh` | Show human-readable status |
 
 Boulder is integrated into `#ulw`, `#rl`, `#rw`, and `#ho` skills. Configure via `.omo/config.json` boulder section. See `docs/config.md`.
+
+Agent Teams
+
+Atlas and Spawn support multi-agent coordination via Claude Code's TeamCreate/SendMessage API. When `teams.enabled` is true in `.omo/config.json`:
+
+- Atlas creates persistent teams for plans with 3+ tasks, using shared task lists for progress tracking.
+- Spawn uses team-based dispatch instead of fire-and-forget background agents.
+- `teams.auto_escalation` triggers oracle escalation after repeated subagent failures.
+- `teams.notify_on_completion` sends OS notifications when team tasks complete.
+
+Configure via `.omo/config.json` teams section. See `docs/config.md`.
 
 Repo-local state created by the plugin
 

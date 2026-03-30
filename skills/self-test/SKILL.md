@@ -45,7 +45,7 @@ Phase 5.5 — Hooks validation:
 
 1. Check if `hooks/hooks.json` exists.
 2. If it exists, verify it is valid JSON.
-3. Check that it defines `Stop`, `SessionStart`, and `Notification` hook events.
+3. Check that it defines `Stop`, `SessionStart`, `Notification`, `SubagentStop`, `TeammateIdle`, `TaskCompleted`, and `PreCompact` hook events.
 4. Verify each hook command references a script that exists in `scripts/`.
 
 Phase 5.6 — Config validation:

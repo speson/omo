@@ -14,9 +14,17 @@ fi
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH='' cd -- "${script_dir}/.." && pwd)
-config_file="${repo_root}/.omo/config.json"
+project_dir="${CLAUDE_PROJECT_DIR:-.}"
 
-if [ ! -f "${config_file}" ]; then
+# Config lookup: project dir first, then plugin repo root
+config_file=""
+if [ -f "${project_dir}/.omo/config.json" ]; then
+  config_file="${project_dir}/.omo/config.json"
+elif [ -f "${repo_root}/.omo/config.json" ]; then
+  config_file="${repo_root}/.omo/config.json"
+fi
+
+if [ -z "${config_file}" ]; then
   printf '%s\n' "${default_value}"
   exit 0
 fi
@@ -48,7 +56,9 @@ dot_to_jq() {
 
 if command -v jq >/dev/null 2>&1; then
   jq_path=$(dot_to_jq "${json_path}")
-  result=$(jq -r "${jq_path} // empty" "${config_file}" 2>/dev/null || true)
+  # Use if-then-else to handle false/null correctly (// treats false as falsy)
+  result=$(jq -r "if ${jq_path} == null then \"__NULL__\" elif ${jq_path} == false then \"false\" else ${jq_path} end" "${config_file}" 2>/dev/null || true)
+  [ "${result}" = "__NULL__" ] && result=""
 elif command -v python3 >/dev/null 2>&1; then
   result=$(python3 2>/dev/null - "${config_file}" "${json_path}" <<'PYEOF' || true
 import json, sys
