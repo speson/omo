@@ -17,8 +17,8 @@ if [ ! -f "${boulder_file}" ]; then
 fi
 
 # JSON field reader
-json_str() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
-json_raw() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":[a-z0-9]*" "$2" | cut -d: -f2; fi; }
+json_str() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
+json_raw() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *[a-z0-9]*" "$2" | sed 's/.*: *//'; fi; }
 
 active=$(json_raw active "${boulder_file}")
 if [ "${active}" != "true" ]; then

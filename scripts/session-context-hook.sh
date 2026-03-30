@@ -15,7 +15,7 @@ fi
 
 # Check source — skip for "clear" sessions
 if [ -n "${input}" ]; then
-  source_type=$(echo "${input}" | grep -o '"source":"[^"]*"' | cut -d'"' -f4 2>/dev/null || true)
+  source_type=$(echo "${input}" | grep -o '"source" *: *"[^"]*"' | cut -d'"' -f4 2>/dev/null || true)
   if [ "${source_type}" = "clear" ]; then
     exit 0
   fi
@@ -29,8 +29,8 @@ fi
 boulder_file="${project_dir}/.claude/state/boulder.json"
 
 # JSON field readers
-json_str() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
-json_raw() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":[a-z0-9]*" "$2" | cut -d: -f2; fi; }
+json_str() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
+json_raw() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *[a-z0-9]*" "$2" | sed 's/.*: *//'; fi; }
 
 task_slug=$(json_str task_slug "${boulder_file}")
 goal=$(json_str goal "${boulder_file}")

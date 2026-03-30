@@ -56,8 +56,8 @@ if command -v jq >/dev/null 2>&1; then
   mv "${tmp_file}" "${boulder_file}"
 else
   # Fallback: read current values with grep
-  attempts=$(grep -o '"attempts":[0-9]*' "${boulder_file}" | cut -d: -f2)
-  consec=$(grep -o '"consecutive_failures":[0-9]*' "${boulder_file}" | cut -d: -f2)
+  attempts=$(grep -o '"attempts" *: *[0-9]*' "${boulder_file}" | sed 's/.*: *//')
+  consec=$(grep -o '"consecutive_failures" *: *[0-9]*' "${boulder_file}" | sed 's/.*: *//')
   new_attempts=$((attempts + 1))
 
   if [ "${outcome}" = "failed" ]; then
@@ -69,10 +69,10 @@ else
   fi
 
   sed -i.bak \
-    -e "s/\"attempts\":[0-9]*\([^0-9]\)/\"attempts\":${new_attempts}\1/" \
-    -e "s/\"consecutive_failures\":[0-9]*\([^0-9]\)/\"consecutive_failures\":${new_consec}\1/" \
-    -e "s/\"last_outcome\":\"[^\"]*\"/\"last_outcome\":\"${outcome}\"/" \
-    -e "s/\"updated_at\":\"[^\"]*\"/\"updated_at\":\"${now}\"/" \
+    -e "s/\"attempts\" *: *[0-9]*\([^0-9]\)/\"attempts\": ${new_attempts}\1/" \
+    -e "s/\"consecutive_failures\" *: *[0-9]*\([^0-9]\)/\"consecutive_failures\": ${new_consec}\1/" \
+    -e "s/\"last_outcome\" *: *\"[^\"]*\"/\"last_outcome\": \"${outcome}\"/" \
+    -e "s/\"updated_at\" *: *\"[^\"]*\"/\"updated_at\": \"${now}\"/" \
     "${boulder_file}"
   rm -f "${boulder_file}.bak"
 fi
@@ -83,9 +83,9 @@ if command -v jq >/dev/null 2>&1; then
   attempts_now=$(jq -r '.attempts' "${boulder_file}")
   max_now=$(jq -r '.max_attempts' "${boulder_file}")
 else
-  consec_now=$(grep -o '"consecutive_failures":[0-9]*' "${boulder_file}" | cut -d: -f2)
-  attempts_now=$(grep -o '"attempts":[0-9]*' "${boulder_file}" | cut -d: -f2)
-  max_now=$(grep -o '"max_attempts":[0-9]*' "${boulder_file}" | cut -d: -f2)
+  consec_now=$(grep -o '"consecutive_failures" *: *[0-9]*' "${boulder_file}" | sed 's/.*: *//')
+  attempts_now=$(grep -o '"attempts" *: *[0-9]*' "${boulder_file}" | sed 's/.*: *//')
+  max_now=$(grep -o '"max_attempts" *: *[0-9]*' "${boulder_file}" | sed 's/.*: *//')
 fi
 
 echo "[Boulder] Attempt ${attempts_now}/${max_now}: ${outcome}"

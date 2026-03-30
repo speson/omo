@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -1215,6 +1215,220 @@ AGENTEOF
       "grep -q '^category:' '${agent_file}'"
   done
 
+  echo ""
+  echo "  [validate-config branch coverage]"
+
+  local vcbase="${tmpdir}/vc-base"
+  mkdir -p "${vcbase}/scripts"
+  cp "${cdir}/scripts/validate-config.sh" "${vcbase}/scripts/"
+  chmod +x "${vcbase}/scripts/validate-config.sh"
+
+  # 1 — missing version field
+  local vc1="${tmpdir}/vc-missing-version"
+  mkdir -p "${vc1}/scripts" "${vc1}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc1}/scripts/"
+  printf '{"categories":{"fast-search":{"model":"haiku"}}}\n' > "${vc1}/.omo/config.json"
+  run_test_output "validate: missing version -> error" \
+    "cd '${vc1}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: missing version -> exit 1" \
+    "cd '${vc1}' && bash scripts/validate-config.sh"
+
+  # 2 — wrong version
+  local vc2="${tmpdir}/vc-wrong-version"
+  mkdir -p "${vc2}/scripts" "${vc2}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc2}/scripts/"
+  printf '{"version":"2","categories":{"fast-search":{"model":"haiku"}}}\n' > "${vc2}/.omo/config.json"
+  run_test_output "validate: wrong version -> error" \
+    "cd '${vc2}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: wrong version -> exit 1" \
+    "cd '${vc2}' && bash scripts/validate-config.sh"
+
+  # 3 — unknown category
+  local vc3="${tmpdir}/vc-bad-category"
+  mkdir -p "${vc3}/scripts" "${vc3}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc3}/scripts/"
+  printf '{"version":"1","categories":{"invalid-cat":{"model":"haiku"}}}\n' > "${vc3}/.omo/config.json"
+  run_test_output "validate: unknown category -> error" \
+    "cd '${vc3}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: unknown category -> exit 1" \
+    "cd '${vc3}' && bash scripts/validate-config.sh"
+
+  # 4 — missing model in category
+  local vc4="${tmpdir}/vc-no-model"
+  mkdir -p "${vc4}/scripts" "${vc4}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc4}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{}}}\n' > "${vc4}/.omo/config.json"
+  run_test_output "validate: missing model in category -> error" \
+    "cd '${vc4}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: missing model in category -> exit 1" \
+    "cd '${vc4}' && bash scripts/validate-config.sh"
+
+  # 5 — invalid model value
+  local vc5="${tmpdir}/vc-bad-model"
+  mkdir -p "${vc5}/scripts" "${vc5}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc5}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"gpt4"}}}\n' > "${vc5}/.omo/config.json"
+  run_test_output "validate: invalid model -> error" \
+    "cd '${vc5}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: invalid model -> exit 1" \
+    "cd '${vc5}' && bash scripts/validate-config.sh"
+
+  # 6 — max_iterations negative
+  local vc6="${tmpdir}/vc-iter-neg"
+  mkdir -p "${vc6}/scripts" "${vc6}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc6}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"ralph-loop":{"max_iterations":-1}}\n' \
+    > "${vc6}/.omo/config.json"
+  run_test_output "validate: max_iterations negative -> error" \
+    "cd '${vc6}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: max_iterations negative -> exit 1" \
+    "cd '${vc6}' && bash scripts/validate-config.sh"
+
+  # 7 — max_iterations string
+  local vc7="${tmpdir}/vc-iter-str"
+  mkdir -p "${vc7}/scripts" "${vc7}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc7}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"ralph-loop":{"max_iterations":"abc"}}\n' \
+    > "${vc7}/.omo/config.json"
+  run_test_output "validate: max_iterations string -> error" \
+    "cd '${vc7}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: max_iterations string -> exit 1" \
+    "cd '${vc7}' && bash scripts/validate-config.sh"
+
+  # 8 — oracle_default invalid
+  local vc8="${tmpdir}/vc-oracle-bad"
+  mkdir -p "${vc8}/scripts" "${vc8}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc8}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"ralph-loop":{"oracle_default":"yes"}}\n' \
+    > "${vc8}/.omo/config.json"
+  run_test_output "validate: oracle_default invalid -> error" \
+    "cd '${vc8}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: oracle_default invalid -> exit 1" \
+    "cd '${vc8}' && bash scripts/validate-config.sh"
+
+  # 9 — spawn max_concurrent_agents out of range (25)
+  local vc9="${tmpdir}/vc-spawn-high"
+  mkdir -p "${vc9}/scripts" "${vc9}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc9}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"spawn":{"max_concurrent_agents":25}}\n' \
+    > "${vc9}/.omo/config.json"
+  run_test_output "validate: spawn out of range -> error" \
+    "cd '${vc9}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: spawn out of range -> exit 1" \
+    "cd '${vc9}' && bash scripts/validate-config.sh"
+
+  # 10 — spawn max_concurrent_agents zero
+  local vc10="${tmpdir}/vc-spawn-zero"
+  mkdir -p "${vc10}/scripts" "${vc10}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc10}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"spawn":{"max_concurrent_agents":0}}\n' \
+    > "${vc10}/.omo/config.json"
+  run_test_output "validate: spawn zero -> error" \
+    "cd '${vc10}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: spawn zero -> exit 1" \
+    "cd '${vc10}' && bash scripts/validate-config.sh"
+
+  # 11 — boulder.enabled not boolean
+  local vc11="${tmpdir}/vc-boulder-bad"
+  mkdir -p "${vc11}/scripts" "${vc11}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc11}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"boulder":{"enabled":"yes"}}\n' \
+    > "${vc11}/.omo/config.json"
+  run_test_output "validate: boulder.enabled invalid -> error" \
+    "cd '${vc11}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: boulder.enabled invalid -> exit 1" \
+    "cd '${vc11}' && bash scripts/validate-config.sh"
+
+  # 12 — teams.max_teammates out of range (0)
+  local vc12="${tmpdir}/vc-teams-zero"
+  mkdir -p "${vc12}/scripts" "${vc12}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc12}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"teams":{"max_teammates":0}}\n' \
+    > "${vc12}/.omo/config.json"
+  run_test_output "validate: teams.max_teammates out of range -> error" \
+    "cd '${vc12}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: teams.max_teammates out of range -> exit 1" \
+    "cd '${vc12}' && bash scripts/validate-config.sh"
+
+  # 13 — disabled_skills not array
+  local vc13="${tmpdir}/vc-ds-string"
+  mkdir -p "${vc13}/scripts" "${vc13}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc13}/scripts/"
+  printf '{"version":"1","categories":{"fast-search":{"model":"haiku"}},"disabled_skills":"retro"}\n' \
+    > "${vc13}/.omo/config.json"
+  run_test_output "validate: disabled_skills not array -> error" \
+    "cd '${vc13}' && bash scripts/validate-config.sh" \
+    "ERROR"
+  run_test_fail "validate: disabled_skills not array -> exit 1" \
+    "cd '${vc13}' && bash scripts/validate-config.sh"
+
+  # 14 — model hierarchy warning (deep-reasoning lower than planning)
+  local vc14="${tmpdir}/vc-hierarchy-warn"
+  mkdir -p "${vc14}/scripts" "${vc14}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc14}/scripts/"
+  printf '{"version":"1","categories":{"deep-reasoning":{"model":"haiku"},"planning":{"model":"opus"}}}\n' \
+    > "${vc14}/.omo/config.json"
+  run_test_output "validate: model hierarchy warning -> WARNING" \
+    "cd '${vc14}' && bash scripts/validate-config.sh" \
+    "WARNING"
+  run_test "validate: model hierarchy warning -> exit 0" \
+    "cd '${vc14}' && bash scripts/validate-config.sh"
+
+  # 15 — valid full config with all fields
+  local vc15="${tmpdir}/vc-full-valid"
+  mkdir -p "${vc15}/scripts" "${vc15}/.omo"
+  cp "${vcbase}/scripts/validate-config.sh" "${vc15}/scripts/"
+  cat > "${vc15}/.omo/config.json" <<'VCEOF'
+{
+  "version": "1",
+  "categories": {
+    "fast-search":    {"model": "haiku"},
+    "verification":   {"model": "sonnet"},
+    "implementation": {"model": "sonnet"},
+    "planning":       {"model": "sonnet"},
+    "deep-reasoning": {"model": "opus"},
+    "research":       {"model": "sonnet"},
+    "media":          {"model": "sonnet"}
+  },
+  "ralph-loop": {
+    "max_iterations": 50,
+    "oracle_default": false
+  },
+  "spawn": {
+    "max_concurrent_agents": 5
+  },
+  "boulder": {
+    "enabled": true,
+    "max_attempts": 3,
+    "auto_resume": false
+  },
+  "teams": {
+    "enabled": false,
+    "max_teammates": 4,
+    "auto_escalation": true,
+    "notify_on_completion": true
+  },
+  "disabled_skills": []
+}
+VCEOF
+  run_test "validate: valid full config -> pass" \
+    "cd '${vc15}' && bash scripts/validate-config.sh"
+  run_test_output "validate: valid full config -> PASS in output" \
+    "cd '${vc15}' && bash scripts/validate-config.sh" \
+    "PASS"
+
   cd "${tmpdir}"
   echo ""
 }
@@ -1711,6 +1925,205 @@ BEOF
     "grep -q 'fast-search.*sonnet' '${repo_root}/docs/config.md'"
 
   echo ""
+  echo "  [team-status.sh]"
+
+  local tsdir="${tmpdir}/team-status-test"
+
+  # 1. No teams dir → expected message
+  run_test_output "team-status: no teams dir → message" \
+    "HOME='${tsdir}' bash '${repo_root}/scripts/team-status.sh'" \
+    "No teams directory found."
+
+  # 2. Empty teams dir → no active teams
+  mkdir -p "${tsdir}/.claude/teams"
+  run_test_output "team-status: empty teams dir → no active" \
+    "HOME='${tsdir}' bash '${repo_root}/scripts/team-status.sh'" \
+    "No active teams."
+
+  # 3. Lists single team — output contains team name
+  mkdir -p "${tsdir}/.claude/teams/test-team"
+  cat > "${tsdir}/.claude/teams/test-team/config.json" <<'TSEOF'
+{"members":[{"name":"worker1","agentId":"abc123","agentType":"build-integrator"}]}
+TSEOF
+  run_test_output "team-status: lists single team" \
+    "HOME='${tsdir}' bash '${repo_root}/scripts/team-status.sh'" \
+    "test-team"
+
+  # 4. Specific team arg shows member details
+  run_test_output "team-status: specific team shows details" \
+    "HOME='${tsdir}' bash '${repo_root}/scripts/team-status.sh' test-team" \
+    "worker1"
+
+  # 5. Missing team → exit 1
+  run_test_fail "team-status: missing team → exit 1" \
+    "HOME='${tsdir}' bash '${repo_root}/scripts/team-status.sh' nonexistent-team"
+
+  # 6. Multiple teams both appear in listing
+  mkdir -p "${tsdir}/.claude/teams/alpha-team"
+  cat > "${tsdir}/.claude/teams/alpha-team/config.json" <<'TSEOF'
+{"members":[{"name":"worker2","agentId":"def456","agentType":"test-commander"}]}
+TSEOF
+  run_test_output "team-status: multiple teams listed (test-team)" \
+    "HOME='${tsdir}' bash '${repo_root}/scripts/team-status.sh'" \
+    "test-team"
+  run_test_output "team-status: multiple teams listed (alpha-team)" \
+    "HOME='${tsdir}' bash '${repo_root}/scripts/team-status.sh'" \
+    "alpha-team"
+
+  echo ""
+  echo "  [check-skill-disabled]"
+
+  local csdir="${tmpdir}/check-skill-test"
+  mkdir -p "${csdir}/.omo"
+
+  # No config → not disabled
+  run_test "check-skill-disabled: no config → allowed" \
+    "CLAUDE_PROJECT_DIR='${csdir}' bash '${repo_root}/scripts/check-skill-disabled.sh' retro"
+
+  # Config with empty disabled_skills → allowed
+  cat > "${csdir}/.omo/config.json" <<'CSEOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"disabled_skills":[]}
+CSEOF
+  run_test "check-skill-disabled: empty array → allowed" \
+    "CLAUDE_PROJECT_DIR='${csdir}' bash '${repo_root}/scripts/check-skill-disabled.sh' retro"
+
+  # Config with skill in disabled_skills → disabled
+  cat > "${csdir}/.omo/config.json" <<'CSEOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"disabled_skills":["retro","dep-audit"]}
+CSEOF
+  run_test_fail "check-skill-disabled: listed skill → exit 1" \
+    "CLAUDE_PROJECT_DIR='${csdir}' bash '${repo_root}/scripts/check-skill-disabled.sh' retro"
+
+  # Non-listed skill → allowed
+  run_test "check-skill-disabled: unlisted skill → allowed" \
+    "CLAUDE_PROJECT_DIR='${csdir}' bash '${repo_root}/scripts/check-skill-disabled.sh' ultrawork"
+
+  # No args → error
+  run_test_fail "check-skill-disabled: no args → error" \
+    "bash '${repo_root}/scripts/check-skill-disabled.sh'"
+
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
+# SECTION 16: No-jq fallback paths
+# ═════════════════════════════════════════════════════════════════
+run_nojq_tests() {
+  echo "No-jq fallback paths:"
+  echo "─────────────────────"
+
+  # Build a PATH with jq's directory removed so command -v jq fails.
+  # This forces scripts onto their python3/grep fallback branches.
+  # If jq is not installed the stripped PATH equals the original PATH,
+  # and the fallback branches are already active — tests still pass.
+  local ORIG_PATH="${PATH}"
+  local jq_real
+  jq_real=$(command -v jq 2>/dev/null || true)
+  local NOJQ_PATH="${PATH}"
+  if [ -n "${jq_real}" ]; then
+    local jq_dir
+    jq_dir=$(dirname "${jq_real}")
+    NOJQ_PATH=$(printf '%s' "${PATH}" | tr ':' '\n' | grep -v "^${jq_dir}$" | tr '\n' ':' | sed 's/:$//')
+  fi
+  export PATH="${NOJQ_PATH}"
+
+  local nojqdir="${tmpdir}/nojq"
+  mkdir -p "${nojqdir}/.claude/state" "${nojqdir}/.omo"
+
+  echo ""
+  echo "  [read-config fallback]"
+
+  # Write a minimal config so the python3 path is exercised
+  cat > "${nojqdir}/.omo/config.json" <<'RCEOF'
+{"version":"1","categories":{"fast-search":{"model":"haiku"}},"ralph-loop":{"max_iterations":42}}
+RCEOF
+
+  run_test_output "nojq: read-config fallback reads value" \
+    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/read-config.sh' categories.fast-search.model sonnet" \
+    "haiku"
+
+  # No config file → default returned
+  local nojqdir2="${tmpdir}/nojq-noconfig"
+  mkdir -p "${nojqdir2}"
+  run_test_output "nojq: read-config fallback default" \
+    "CLAUDE_PROJECT_DIR='${nojqdir2}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/read-config.sh' categories.fast-search.model mydefault" \
+    "mydefault"
+
+  echo ""
+  echo "  [boulder fallback lifecycle]"
+
+  # boulder-init: the shell fallback writes the JSON file directly.
+  # python3 validates the output is well-formed JSON.
+  run_test "nojq: boulder-init fallback creates JSON" \
+    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-init.sh' 'nojq test task' && \
+     [ -f '${nojqdir}/.claude/state/boulder.json' ]"
+
+  run_test "nojq: boulder-init fallback valid JSON" \
+    "python3 -c \"import json; json.load(open('${nojqdir}/.claude/state/boulder.json'))\""
+
+  # The grep-based read helpers in boulder-attempt/check/complete expect
+  # compact JSON (no space after colon).  Pre-seed a compact state file so
+  # the attempt/check/complete fallback paths are exercised independently of
+  # boulder-init's output format.
+  local now
+  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  cat > "${nojqdir}/.claude/state/boulder.json" <<BEOF
+{"active":true,"task_slug":"nojq-test","task_file":"","goal":"nojq test task","attempts":0,"max_attempts":5,"consecutive_failures":0,"last_outcome":"working","last_failure_reason":null,"auto_resume":true,"created_at":"${now}","updated_at":"${now}"}
+BEOF
+
+  run_test "nojq: boulder-attempt fallback updates state" \
+    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-attempt.sh' working && \
+     python3 -c \"import json; d=json.load(open('${nojqdir}/.claude/state/boulder.json')); assert d['attempts'] == 1, d\""
+
+  run_test "nojq: boulder-check fallback reads state" \
+    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-check.sh'"
+
+  run_test_output "nojq: boulder-check fallback shows task info" \
+    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-check.sh'" \
+    "Active task"
+
+  run_test "nojq: boulder-complete fallback marks complete" \
+    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-complete.sh' && \
+     python3 -c \"import json; d=json.load(open('${nojqdir}/.claude/state/boulder.json')); assert d['active'] == False, d\""
+
+  echo ""
+  echo "  [boulder pretty-printed JSON lifecycle]"
+
+  # Test that boulder-attempt/check/complete work with the pretty-printed JSON
+  # that boulder-init's heredoc fallback actually produces (spaces after colons).
+  # This guards against the grep-pattern regression where "key":[value] missed "key": [value].
+  local ppdir="${tmpdir}/nojq-pretty"
+  mkdir -p "${ppdir}/.claude/state" "${ppdir}/.omo"
+
+  run_test "nojq: boulder-init pretty JSON creates file" \
+    "CLAUDE_PROJECT_DIR='${ppdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-init.sh' 'pretty json test'"
+
+  run_test "nojq: boulder-attempt on pretty JSON" \
+    "CLAUDE_PROJECT_DIR='${ppdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-attempt.sh' working && \
+     python3 -c \"import json; d=json.load(open('${ppdir}/.claude/state/boulder.json')); assert d['attempts'] == 1, d\""
+
+  run_test "nojq: boulder-check on pretty JSON" \
+    "CLAUDE_PROJECT_DIR='${ppdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-check.sh'"
+
+  run_test "nojq: boulder-complete on pretty JSON" \
+    "CLAUDE_PROJECT_DIR='${ppdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/boulder-complete.sh' && \
+     python3 -c \"import json; d=json.load(open('${ppdir}/.claude/state/boulder.json')); assert d['active'] == False, d\""
+
+  echo ""
+  echo "  [check-skill-disabled fallback]"
+
+  local nojqdir3="${tmpdir}/nojq-skill"
+  mkdir -p "${nojqdir3}/.omo"
+  cat > "${nojqdir3}/.omo/config.json" <<'SKEOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"disabled_skills":["retro","dep-audit"]}
+SKEOF
+
+  run_test_fail "nojq: check-skill-disabled fallback" \
+    "CLAUDE_PROJECT_DIR='${nojqdir3}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/check-skill-disabled.sh' retro"
+
+  export PATH="${ORIG_PATH}"
+
+  echo ""
 }
 
 # ═════════════════════════════════════════════════════════════════
@@ -1730,8 +2143,9 @@ case "${section}" in
   config)      run_config_tests ;;
   boulder)     run_boulder_tests ;;
   hookscripts) run_hook_script_tests ;;
-  teamhooks) run_team_hook_tests ;;
-  sprint6) run_sprint6_tests ;;
+  teamhooks)   run_team_hook_tests ;;
+  sprint6)     run_sprint6_tests ;;
+  nojq)        run_nojq_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -1748,10 +2162,11 @@ case "${section}" in
     run_hook_script_tests
     run_team_hook_tests
     run_sprint6_tests
+    run_nojq_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, all"
     exit 1
     ;;
 esac

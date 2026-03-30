@@ -17,8 +17,8 @@ STATE_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/state"
 STATE_FILE="${STATE_DIR}/ralph-loop.json"
 
 # JSON field reader: prefers jq, falls back to grep+cut
-json_str()  { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
-json_raw()  { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\":[a-z0-9]*" "$2" | cut -d: -f2; fi; }
+json_str()  { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
+json_raw()  { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *[a-z0-9]*" "$2" | sed 's/.*: *//'; fi; }
 
 # No state file = no active loop
 if [ ! -f "${STATE_FILE}" ]; then

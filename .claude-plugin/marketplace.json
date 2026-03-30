@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Claude Code operating workflows — quality and speed over token efficiency.",
-    "version": "1.6.1"
+    "version": "1.7.0"
   },
   "plugins": [
     {
       "name": "omo",
       "source": "./",
       "description": "Reusable Claude Code operating workflows that spend more tokens for better, faster results — parallel agents, deep analysis, and multi-perspective verification.",
-      "version": "1.6.1",
+      "version": "1.7.0",
       "author": {
         "name": "markncompany"
       }

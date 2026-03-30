@@ -28,9 +28,9 @@ if command -v jq >/dev/null 2>&1; then
   mv "${tmp_file}" "${boulder_file}"
 else
   sed -i.bak \
-    -e 's/"active":true/"active":false/' \
-    -e "s/\"last_outcome\":\"[^\"]*\"/\"last_outcome\":\"completed\"/" \
-    -e "s/\"updated_at\":\"[^\"]*\"/\"updated_at\":\"${now}\"/" \
+    -e 's/"active" *: *true/"active": false/' \
+    -e "s/\"last_outcome\" *: *\"[^\"]*\"/\"last_outcome\": \"completed\"/" \
+    -e "s/\"updated_at\" *: *\"[^\"]*\"/\"updated_at\": \"${now}\"/" \
     "${boulder_file}"
   rm -f "${boulder_file}.bak"
 fi
@@ -40,8 +40,8 @@ if command -v jq >/dev/null 2>&1; then
   slug=$(jq -r '.task_slug' "${boulder_file}")
   attempts=$(jq -r '.attempts' "${boulder_file}")
 else
-  slug=$(grep -o '"task_slug":"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
-  attempts=$(grep -o '"attempts":[0-9]*' "${boulder_file}" | cut -d: -f2)
+  slug=$(grep -o '"task_slug" *: *"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
+  attempts=$(grep -o '"attempts" *: *[0-9]*' "${boulder_file}" | sed 's/.*: *//')
 fi
 
 echo "[Boulder] Completed: ${slug} after ${attempts} attempt(s)"
