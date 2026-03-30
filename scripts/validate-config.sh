@@ -282,6 +282,47 @@ if [ -n "${teams_notify}" ] && [ "${teams_notify}" != "null" ]; then
   esac
 fi
 
+# ─── evolve.max_discovery_agents ─────────────────────────────────────────
+evolve_max=$(json_get '.evolve.max_discovery_agents')
+if [ -n "${evolve_max}" ] && [ "${evolve_max}" != "null" ]; then
+  case "${evolve_max}" in
+    ''|*[!0-9]*)
+      echo "  ERROR: evolve.max_discovery_agents must be a positive integer (1-6), got '${evolve_max}'"
+      errors=$((errors + 1))
+      ;;
+    *)
+      if [ "${evolve_max}" -lt 1 ] || [ "${evolve_max}" -gt 6 ]; then
+        echo "  ERROR: evolve.max_discovery_agents must be 1-6, got ${evolve_max}"
+        errors=$((errors + 1))
+      fi
+      ;;
+  esac
+fi
+
+# ─── evolve.auto_plan ───────────────────────────────────────────────────
+evolve_plan=$(json_get '.evolve.auto_plan')
+if [ -n "${evolve_plan}" ] && [ "${evolve_plan}" != "null" ]; then
+  case "${evolve_plan}" in
+    true|false) ;;
+    *)
+      echo "  ERROR: evolve.auto_plan must be boolean, got '${evolve_plan}'"
+      errors=$((errors + 1))
+      ;;
+  esac
+fi
+
+# ─── evolve.include_memory ──────────────────────────────────────────────
+evolve_mem=$(json_get '.evolve.include_memory')
+if [ -n "${evolve_mem}" ] && [ "${evolve_mem}" != "null" ]; then
+  case "${evolve_mem}" in
+    true|false) ;;
+    *)
+      echo "  ERROR: evolve.include_memory must be boolean, got '${evolve_mem}'"
+      errors=$((errors + 1))
+      ;;
+  esac
+fi
+
 # ─── disabled_skills ─────────────────────────────────────────────────────────
 ds_type=$(json_get '.disabled_skills | type' 2>/dev/null || true)
 if [ -n "${ds_type}" ] && [ "${ds_type}" != "null" ] && [ "${ds_type}" != "array" ]; then

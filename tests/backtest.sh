@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -2127,6 +2127,125 @@ SKEOF
 }
 
 # ═════════════════════════════════════════════════════════════════
+# SECTION 17: Evolve pipeline scripts
+# ═════════════════════════════════════════════════════════════════
+run_evolve_tests() {
+  echo "Evolve pipeline:"
+  echo "────────────────"
+
+  echo ""
+  echo "  [collect-metrics]"
+
+  run_test "collect-metrics: runs successfully" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh >/dev/null"
+
+  run_test_output "collect-metrics: outputs valid JSON" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh 2>/dev/null | python3 -c 'import json,sys; json.load(sys.stdin); print(\"valid\")'" \
+    "valid"
+
+  run_test_output "collect-metrics: has timestamp key" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(\"ts:\"+d[\"timestamp\"])'" \
+    "ts:"
+
+  run_test_output "collect-metrics: has tests.count" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(\"tc:\"+str(d[\"tests\"][\"count\"]))'" \
+    "tc:"
+
+  run_test_output "collect-metrics: has scripts.count" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(\"sc:\"+str(d[\"scripts\"][\"count\"]))'" \
+    "sc:"
+
+  run_test_output "collect-metrics: has skills.count" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(\"skc:\"+str(d[\"skills\"][\"count\"]))'" \
+    "skc:"
+
+  run_test_output "collect-metrics: has agents.count" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(\"ac:\"+str(d[\"agents\"][\"count\"]))'" \
+    "ac:"
+
+  # Test with no memory directory
+  local evdir="${tmpdir}/evolve-nomem"
+  mkdir -p "${evdir}/scripts" "${evdir}/tests"
+  cp "${repo_root}/scripts/collect-metrics.sh" "${evdir}/scripts/"
+  chmod +x "${evdir}/scripts/collect-metrics.sh"
+  echo '#!/usr/bin/env bash' > "${evdir}/tests/backtest.sh"
+
+  run_test_output "collect-metrics: no memory → 0 values" \
+    "cd '${evdir}' && bash scripts/collect-metrics.sh 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"memory\"][\"conventions\"]==0; print(\"mem:0\")'" \
+    "mem:0"
+
+  # Test stderr summary
+  run_test_output "collect-metrics: stderr has summary" \
+    "cd '${repo_root}' && bash scripts/collect-metrics.sh >/dev/null" \
+    "Project Metrics:"
+
+  echo ""
+  echo "  [improvement-log]"
+
+  local logdir="${tmpdir}/evolve-log"
+  mkdir -p "${logdir}"
+
+  run_test "improvement-log: creates log entry" \
+    "CLAUDE_PROJECT_DIR='${logdir}' bash '${repo_root}/scripts/improvement-log.sh' 'test-slug' 'test summary'"
+
+  run_test "improvement-log: history.log exists" \
+    "[ -f '${logdir}/.claude/state/improvements/history.log' ]"
+
+  run_test_output "improvement-log: log contains slug" \
+    "cat '${logdir}/.claude/state/improvements/history.log'" \
+    "test-slug"
+
+  run_test_output "improvement-log: log contains summary" \
+    "cat '${logdir}/.claude/state/improvements/history.log'" \
+    "test summary"
+
+  run_test_fail "improvement-log: no slug → error" \
+    "bash '${repo_root}/scripts/improvement-log.sh'"
+
+  echo ""
+  echo "  [validate-config: evolve section]"
+
+  local evconfdir="${tmpdir}/evolve-config"
+  mkdir -p "${evconfdir}/scripts" "${evconfdir}/.omo"
+  cp "${repo_root}/scripts/validate-config.sh" "${evconfdir}/scripts/"
+  chmod +x "${evconfdir}/scripts/validate-config.sh"
+
+  # Valid evolve config
+  cat > "${evconfdir}/.omo/config.json" <<'EVEOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"evolve":{"max_discovery_agents":6,"auto_plan":true,"include_memory":true}}
+EVEOF
+
+  run_test "validate-config: valid evolve config → PASS" \
+    "cd '${evconfdir}' && bash scripts/validate-config.sh"
+
+  # Invalid max_discovery_agents
+  cat > "${evconfdir}/.omo/config.json" <<'EVEOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"evolve":{"max_discovery_agents":99}}
+EVEOF
+
+  run_test_fail "validate-config: evolve agents=99 → FAIL" \
+    "cd '${evconfdir}' && bash scripts/validate-config.sh"
+
+  # Invalid auto_plan
+  cat > "${evconfdir}/.omo/config.json" <<'EVEOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"evolve":{"auto_plan":"maybe"}}
+EVEOF
+
+  run_test_fail "validate-config: evolve auto_plan=maybe → FAIL" \
+    "cd '${evconfdir}' && bash scripts/validate-config.sh"
+
+  # Invalid include_memory
+  cat > "${evconfdir}/.omo/config.json" <<'EVEOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"evolve":{"include_memory":"yes"}}
+EVEOF
+
+  run_test_fail "validate-config: evolve include_memory=yes → FAIL" \
+    "cd '${evconfdir}' && bash scripts/validate-config.sh"
+
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -2146,6 +2265,7 @@ case "${section}" in
   teamhooks)   run_team_hook_tests ;;
   sprint6)     run_sprint6_tests ;;
   nojq)        run_nojq_tests ;;
+  evolve)      run_evolve_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -2163,10 +2283,11 @@ case "${section}" in
     run_team_hook_tests
     run_sprint6_tests
     run_nojq_tests
+    run_evolve_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, all"
     exit 1
     ;;
 esac

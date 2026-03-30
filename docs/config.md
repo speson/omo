@@ -58,6 +58,11 @@ The `.omo/` directory is separate from `.claude/state/` which holds runtime stat
     "auto_escalation": true,
     "notify_on_completion": true
   },
+  "evolve": {
+    "max_discovery_agents": 6,
+    "auto_plan": true,
+    "include_memory": true
+  },
   "disabled_skills": []
 }
 ```
@@ -115,6 +120,16 @@ Boulder provides cross-session task persistence. When enabled, tasks initialized
 | `notify_on_completion` | boolean | true | Send OS notification when team tasks complete |
 
 Teams enables multi-agent coordination via Claude Code's TeamCreate/SendMessage API. When enabled, Atlas and Spawn skills use persistent teams with shared task lists instead of fire-and-forget subagents.
+
+### evolve
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `max_discovery_agents` | integer | 6 | Parallel discovery agents (1-6) |
+| `auto_plan` | boolean | true | Auto-generate sprint plan after synthesis |
+| `include_memory` | boolean | true | Include memory-keeper in discovery phase |
+
+The evolve skill (`#ev`) runs an automated self-improvement pipeline that collects project metrics, dispatches up to 6 analysis agents in parallel, synthesizes findings into an IMPACT x EFFORT matrix, generates a validated sprint plan, and saves the report to `.claude/state/improvements/`.
 
 ### disabled_skills
 

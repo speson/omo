@@ -61,6 +61,7 @@ All skills support auto-intercept via `#shortcut` patterns. Type `#ulw auth 구�
 | `#va` | `/omo:verify-all [scope]` | Composite verification (ship-check + diff-review in parallel) |
 | `#rel` | `/omo:release <version>` | Full release pipeline (commit, push, tag, release, marketplace) |
 | `#sync` | `/omo:docs-sync [scope]` | Sync README and user guide with current project state |
+| `#ev` | `/omo:evolve [focus]` | Automated self-improvement pipeline (6-agent analysis → sprint plan) |
 
 Configuration
 
@@ -159,6 +160,7 @@ Repo-local state created by the plugin
 - Briefings: `.claude/state/briefings/`
 - Cross-session memory: `.claude/state/memory/` (conventions, decisions, failures)
 - Boulder state: `.claude/state/boulder.json`
+- Improvement reports: `.claude/state/improvements/`
 
 Operating rules
 

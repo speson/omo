@@ -58,6 +58,11 @@ if command -v jq >/dev/null 2>&1; then
       "auto_escalation": true,
       "notify_on_completion": true
     },
+    "evolve": {
+      "max_discovery_agents": 6,
+      "auto_plan": true,
+      "include_memory": true
+    },
     "disabled_skills": []
   }' > "${config_file}"
 else
@@ -90,6 +95,11 @@ else
     "max_teammates": 8,
     "auto_escalation": true,
     "notify_on_completion": true
+  },
+  "evolve": {
+    "max_discovery_agents": 6,
+    "auto_plan": true,
+    "include_memory": true
   },
   "disabled_skills": []
 }
