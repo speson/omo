@@ -16,7 +16,7 @@ Step 1 — Gather the diff:
 - If scope is specified, limit review to those files.
 - If no git, review recently modified files.
 
-Step 2 — Review from 5 perspectives (run in parallel where possible):
+Step 2 — Review from 5 perspectives (ALWAYS run in parallel — dispatch as simultaneous agents):
 
 1. **Correctness** — Does the code do what it claims? Logic errors, off-by-ones, null handling, edge cases, race conditions.
 2. **Security** — OWASP top 10 risks: injection, XSS, auth bypass, secrets in code, unsafe deserialization, missing input validation.
@@ -24,11 +24,14 @@ Step 2 — Review from 5 perspectives (run in parallel where possible):
 4. **Maintainability** — Naming clarity, dead code, stale comments, code duplication, overly complex logic, missing error handling.
 5. **Scope** — Does the diff contain accidental scope expansion, unrelated changes, debug leftovers, placeholder text, or TODO items?
 
-Use specialists for depth:
+Dispatch specialists in parallel for deeper analysis:
 
-- `oracle` for complex architectural concerns.
+- `security-auditor` for perspective 2 (always, not just for security-heavy diffs).
 - `deepsearch` to trace how changed code is used elsewhere.
 - `test-commander` to identify what tests should cover the changes.
+- `oracle` for complex architectural concerns.
+
+Do not do shallow inline analysis when a specialist can go deeper. The goal is thoroughness, not token savings.
 
 Step 3 — Compile findings:
 

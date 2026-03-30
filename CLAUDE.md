@@ -1,5 +1,16 @@
 # omo Development Manual
 
+Philosophy
+
+omo prioritizes result quality and delivery speed over token efficiency. Spend more tokens to get better, faster outcomes:
+
+- **Parallelize aggressively** — spawn multiple specialists simultaneously rather than running them sequentially. Two agents working in parallel finish faster than one agent doing both tasks.
+- **Investigate deeply before acting** — run `deepsearch` + `repo-librarian` in parallel to build context. Understanding the problem thoroughly up front prevents costly rework.
+- **Verify from multiple angles** — use `diff-review` (5-perspective parallel review) + `ship-check` + `test-commander` together, not just one.
+- **Escalate early** — use `oracle` after the first failed attempt, not the second. Use `critic` for any plan with 3+ steps.
+- **Prefer specialists over generalists** — delegate to purpose-built agents (`bug-hunter`, `security-auditor`, `perf-analyst`) rather than doing shallow analysis inline.
+- **Redundancy is acceptable** — if two agents examine the same code from different angles and both find no issues, that is higher confidence, not wasted tokens.
+
 This repository is a Claude Code plugin source tree.
 
 Core plugin assets live at the repository root:
@@ -150,12 +161,12 @@ Operating rules
 
 - Maintain a todo list for tasks with more than 3 concrete steps.
 - Prefer subagents over stuffing more instructions into one prompt.
-- Prefer built-in `Explore` for broad search and `repo-librarian` for repo-aware summaries.
-- Prefer built-in `/batch` when the work splits into many independent units in a git repo.
-- Prefer `test-commander` before broad test runs.
-- Use `oracle` after 2+ failed fix attempts or for complex architecture decisions.
-- Use `critic` to verify plans are executable before starting large implementations.
+- Parallelize by default: when 2+ independent tasks exist, run them simultaneously via `spawn` or `Task` with `run_in_background=true`.
+- Run `deepsearch` + `repo-librarian` in parallel for context gathering before implementation.
+- Use `critic` for any plan with 3+ steps. Use `oracle` after the first failed attempt, not the second.
 - Use `atlas` when coordinating 3+ specialist agents on a single plan.
+- Always run `diff-review` + `ship-check` together for final verification — never skip multi-perspective review.
+- Prefer built-in `/batch` when the work splits into many independent units in a git repo.
 - If MCP is unavailable, fall back to native tools and note the gap instead of blocking.
 - Update task notes and handoffs when context would otherwise be lost.
 - Report what verification ran, what did not run, and why.

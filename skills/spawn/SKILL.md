@@ -68,10 +68,11 @@ Step 5 — Report:
 
 Rules:
 
-- Do not spawn agents for trivial tasks. If the total work is < 3 steps, do it directly.
+- Only skip spawning if the total work is a single step. For 2+ independent steps, always parallelize.
 - Do not spawn more agents than there are independent units.
 - If an agent's output affects another agent's work, they cannot be parallel.
 - Prefer `/batch` for git-based parallel work on separate branches.
+- When in doubt, spawn. Parallel execution that finishes faster is worth the extra tokens.
 
 End with:
 

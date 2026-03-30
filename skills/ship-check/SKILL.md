@@ -9,8 +9,11 @@ allowed-tools: Read, Glob, Grep, Bash, Task
 Perform a final check for: $ARGUMENTS
 
 1. Inspect the current diff or the scope the user provided.
-2. Ask `test-commander` for the smallest verification set that still proves confidence.
-3. Run those commands if possible.
+2. Dispatch in parallel:
+   - `test-commander` for the narrowest verification set that still proves confidence.
+   - `security-auditor` for OWASP checks on changed code.
+   - `deepsearch` to trace usage of changed functions/APIs elsewhere.
+3. Run the verification commands recommended by test-commander.
 4. Review the diff for:
    - accidental scope expansion
    - placeholder text
@@ -20,5 +23,6 @@ Perform a final check for: $ARGUMENTS
 6. Summarize:
    - verification run
    - not run
+   - security findings
    - top risks
    - ship readiness
