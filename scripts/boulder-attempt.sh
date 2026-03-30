@@ -5,6 +5,7 @@ set -eu
 
 project_dir="${CLAUDE_PROJECT_DIR:-.}"
 boulder_file="${project_dir}/.claude/state/boulder.json"
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
 if [ $# -lt 1 ]; then
   echo "Usage: boulder-attempt.sh <outcome> [reason]" >&2
@@ -18,6 +19,12 @@ case "${outcome}" in
   working|interrupted|failed|completed) ;;
   *) echo "Invalid outcome: ${outcome}. Must be: working, interrupted, failed, completed" >&2; exit 1 ;;
 esac
+
+enabled=$(bash "${script_dir}/read-config.sh" boulder.enabled true 2>/dev/null || echo "true")
+if [ "${enabled}" != "true" ]; then
+  echo "[Boulder] Disabled via config."
+  exit 0
+fi
 
 if [ ! -f "${boulder_file}" ]; then
   echo "No active boulder. Run boulder-init.sh first." >&2
@@ -62,8 +69,8 @@ else
   fi
 
   sed -i.bak \
-    -e "s/\"attempts\":[0-9]*/\"attempts\":${new_attempts}/" \
-    -e "s/\"consecutive_failures\":[0-9]*/\"consecutive_failures\":${new_consec}/" \
+    -e "s/\"attempts\":[0-9]*\([^0-9]\)/\"attempts\":${new_attempts}\1/" \
+    -e "s/\"consecutive_failures\":[0-9]*\([^0-9]\)/\"consecutive_failures\":${new_consec}\1/" \
     -e "s/\"last_outcome\":\"[^\"]*\"/\"last_outcome\":\"${outcome}\"/" \
     -e "s/\"updated_at\":\"[^\"]*\"/\"updated_at\":\"${now}\"/" \
     "${boulder_file}"

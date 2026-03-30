@@ -45,6 +45,12 @@ if [ -n "${config_file}" ]; then
   fi
 fi
 
+enabled=$(bash "${script_dir}/read-config.sh" boulder.enabled true 2>/dev/null || echo "true")
+if [ "${enabled}" != "true" ]; then
+  echo "[Boulder] Disabled via config."
+  exit 0
+fi
+
 # Generate slug from goal
 slug=$(echo "${goal}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9가-힣]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//' | cut -c1-40)
 [ -z "${slug}" ] && slug="task"

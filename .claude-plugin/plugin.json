@@ -1,7 +1,7 @@
 {
   "name": "omo",
   "description": "Claude Code operating workflows that prioritize result quality and speed over token efficiency — aggressive parallelization, multi-agent orchestration, persistent execution loops, and multi-perspective verification.",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "author": {
     "name": "markncompany"
   }

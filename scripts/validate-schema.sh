@@ -142,7 +142,7 @@ if [ -d "hooks" ]; then
       else
         echo "  OK: hooks/hooks.json is valid JSON"
         # Verify expected hook events
-        for event in Stop SessionStart Notification; do
+        for event in Stop SessionStart Notification SubagentStop TeammateIdle TaskCompleted PreCompact; do
           if ! jq -e ".hooks.${event}" hooks/hooks.json >/dev/null 2>&1; then
             echo "  WARN: hooks/hooks.json missing '${event}' event"
           fi

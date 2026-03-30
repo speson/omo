@@ -67,7 +67,7 @@ tmp_file="${STATE_FILE}.tmp"
 if command -v jq >/dev/null 2>&1; then
   jq --argjson i "${new_iteration}" '.iteration = $i' "${STATE_FILE}" > "${tmp_file}"
 else
-  sed "s/\"iteration\"[[:space:]]*:[[:space:]]*${iteration}/\"iteration\":${new_iteration}/" "${STATE_FILE}" > "${tmp_file}"
+  sed "s/\"iteration\"[[:space:]]*:[[:space:]]*${iteration}\([^0-9]\)/\"iteration\":${new_iteration}\1/" "${STATE_FILE}" > "${tmp_file}"
 fi
 mv "${tmp_file}" "${STATE_FILE}"
 

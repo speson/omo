@@ -74,7 +74,7 @@ Agent categories
 
 | Category | Default Model | Agents |
 |---|---|---|
-| `fast-search` | haiku | repo-librarian, deepsearch, memory-keeper |
+| `fast-search` | sonnet | repo-librarian, deepsearch, memory-keeper |
 | `verification` | sonnet | test-commander, security-auditor, perf-analyst |
 | `implementation` | sonnet | build-integrator, test-generator, migration-specialist, docs-keeper |
 | `planning` | sonnet | planner-sisyphus, atlas, critic-lite, oracle-lite |
@@ -90,7 +90,7 @@ Preferred specialists
 - `bug-hunter` for debugging and narrowing reproduction paths
 - `test-commander` for targeted verification strategy
 - `docs-keeper` for docs, prompt, and comment hygiene
-- `oracle` for architecture decisions and hard debugging (use after 2+ failed attempts)
+- `oracle` for architecture decisions and hard debugging (use after first failed attempt)
 - `critic` for plan review before execution (verify executability)
 - `atlas` for master orchestration of complex multi-step plans
 - `vision` for screenshot, PDF, and image analysis
@@ -102,7 +102,7 @@ Preferred specialists
 - `migration-specialist` for pattern-based bulk transformations
 - `critic-lite` for lightweight plan review (simple plans)
 - `oracle-lite` for quick first-pass technical advice
-- `build-integrator-heavy` for complex changes (after 2+ failures)
+- `build-integrator-heavy` for complex changes (after build-integrator failure)
 - `repo-librarian-deep` for deep feature tracing
 
 Hooks

@@ -8,7 +8,10 @@ title="${1:-omo}"
 message="${2:-Task completed}"
 
 if [ "$(uname)" = "Darwin" ]; then
-  osascript -e "display notification \"${message}\" with title \"${title}\"" 2>/dev/null || true
+  # Sanitize inputs to prevent AppleScript injection
+  safe_title=$(printf '%s' "${title}" | tr -d '"\\' | cut -c1-100)
+  safe_message=$(printf '%s' "${message}" | tr -d '"\\' | cut -c1-200)
+  osascript -e "display notification \"${safe_message}\" with title \"${safe_title}\"" 2>/dev/null || true
 elif command -v notify-send >/dev/null 2>&1; then
   notify-send "${title}" "${message}" 2>/dev/null || true
 else

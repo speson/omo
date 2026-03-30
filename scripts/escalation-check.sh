@@ -4,7 +4,7 @@
 # Parses Confidence and Escalation metadata from agent briefings
 set -eu
 
-BRIEFINGS_DIR=".claude/state/briefings"
+BRIEFINGS_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/state/briefings"
 
 if [ -n "${1:-}" ] && [ -f "$1" ]; then
   files="$1"

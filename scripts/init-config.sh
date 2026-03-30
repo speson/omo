@@ -32,7 +32,7 @@ if command -v jq >/dev/null 2>&1; then
   jq -n '{
     "version": "1",
     "categories": {
-      "fast-search":    { "model": "haiku" },
+      "fast-search":    { "model": "sonnet" },
       "verification":   { "model": "sonnet" },
       "implementation": { "model": "sonnet" },
       "planning":       { "model": "sonnet" },
@@ -65,7 +65,7 @@ else
 {
   "version": "1",
   "categories": {
-    "fast-search":    { "model": "haiku" },
+    "fast-search":    { "model": "sonnet" },
     "verification":   { "model": "sonnet" },
     "implementation": { "model": "sonnet" },
     "planning":       { "model": "sonnet" },

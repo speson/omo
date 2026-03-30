@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -469,14 +469,29 @@ run_hooks_tests() {
   echo "─────────────"
 
   echo ""
-  echo "  [Fresh install - no settings file]"
+  echo "  [Plugin hooks detection]"
 
-  local hdir="${tmpdir}/hooks-fresh"
-  mkdir -p "${hdir}"
-  cd "${hdir}"
+  # When run from repo root, ensure-hooks.sh detects hooks/hooks.json
+  run_test_output "hooks: detects plugin hooks from script dir" \
+    "bash '${repo_root}/scripts/ensure-hooks.sh'" \
+    "hooks"
 
-  run_test "hooks: creates settings from scratch" \
-    "bash '${repo_root}/scripts/ensure-hooks.sh' && [ -f .claude/settings.local.json ]"
+  # With CLAUDE_PLUGIN_ROOT set
+  run_test_output "hooks: detects plugin hooks via CLAUDE_PLUGIN_ROOT" \
+    "CLAUDE_PLUGIN_ROOT='${repo_root}' bash '${repo_root}/scripts/ensure-hooks.sh'" \
+    "Plugin hooks detected"
+
+  echo ""
+  echo "  [Legacy path - isolated script]"
+
+  # Copy ensure-hooks.sh to an isolated location to test legacy path
+  local iso_dir="${tmpdir}/hooks-isolated"
+  mkdir -p "${iso_dir}/scripts" "${iso_dir}/.claude"
+  cp "${repo_root}/scripts/ensure-hooks.sh" "${iso_dir}/scripts/"
+  cd "${iso_dir}"
+
+  run_test "hooks: creates settings from scratch (legacy)" \
+    "bash '${iso_dir}/scripts/ensure-hooks.sh' && [ -f .claude/settings.local.json ]"
 
   run_test "hooks: settings contains ralph-loop-guard" \
     "grep -q 'ralph-loop-guard' .claude/settings.local.json"
@@ -484,28 +499,33 @@ run_hooks_tests() {
   run_test "hooks: settings is valid JSON" \
     "python3 -c \"import json; json.load(open('.claude/settings.local.json'))\""
 
+  # Uses object format, not string format
+  run_test "hooks: uses object format (not string)" \
+    "grep -q '\"type\"' .claude/settings.local.json"
+
   echo ""
   echo "  [Idempotent - already registered]"
 
   run_test "hooks: second run is no-op (idempotent)" \
-    "bash '${repo_root}/scripts/ensure-hooks.sh'"
+    "bash '${iso_dir}/scripts/ensure-hooks.sh'"
 
   run_test_output "hooks: second run says already registered" \
-    "bash '${repo_root}/scripts/ensure-hooks.sh'" \
+    "bash '${iso_dir}/scripts/ensure-hooks.sh'" \
     "already registered"
 
   echo ""
   echo "  [Existing settings without hooks]"
 
   local hdir2="${tmpdir}/hooks-existing"
-  mkdir -p "${hdir2}/.claude"
+  mkdir -p "${hdir2}/.claude" "${hdir2}/scripts"
+  cp "${repo_root}/scripts/ensure-hooks.sh" "${hdir2}/scripts/"
   cd "${hdir2}"
 
   echo '{"permissions":{"allow":["Read","Write"]}}' > .claude/settings.local.json
 
   if command -v jq >/dev/null 2>&1; then
     run_test "hooks: merges into existing settings (jq)" \
-      "bash '${repo_root}/scripts/ensure-hooks.sh' && grep -q 'ralph-loop-guard' .claude/settings.local.json"
+      "bash '${hdir2}/scripts/ensure-hooks.sh' && grep -q 'ralph-loop-guard' .claude/settings.local.json"
 
     run_test "hooks: preserves existing fields" \
       "grep -q 'permissions' .claude/settings.local.json"
@@ -514,7 +534,7 @@ run_hooks_tests() {
       "python3 -c \"import json; json.load(open('.claude/settings.local.json'))\""
   else
     run_test_output "hooks: warns about manual merge without jq" \
-      "bash '${repo_root}/scripts/ensure-hooks.sh' || true" \
+      "bash '${hdir2}/scripts/ensure-hooks.sh' || true" \
       "Cannot auto-merge"
   fi
 
@@ -522,16 +542,17 @@ run_hooks_tests() {
   echo "  [Existing settings with hooks section]"
 
   local hdir3="${tmpdir}/hooks-has-hooks"
-  mkdir -p "${hdir3}/.claude"
+  mkdir -p "${hdir3}/.claude" "${hdir3}/scripts"
+  cp "${repo_root}/scripts/ensure-hooks.sh" "${hdir3}/scripts/"
   cd "${hdir3}"
 
   echo '{"hooks":{"PreToolUse":[{"matcher":"","hooks":["echo test"]}]}}' > .claude/settings.local.json
 
   run_test_fail "hooks: existing hooks section without guard → exit 1" \
-    "bash '${repo_root}/scripts/ensure-hooks.sh'"
+    "bash '${hdir3}/scripts/ensure-hooks.sh'"
 
   run_test_output "hooks: tells user to add manually" \
-    "bash '${repo_root}/scripts/ensure-hooks.sh' 2>&1 || true" \
+    "bash '${hdir3}/scripts/ensure-hooks.sh' 2>&1 || true" \
     "manually"
 
   cd "${tmpdir}"
@@ -1093,8 +1114,8 @@ run_config_tests() {
   echo "  [read-config]"
 
   run_test_output "read-config: reads category model" \
-    "bash scripts/read-config.sh categories.fast-search.model haiku" \
-    "haiku"
+    "bash scripts/read-config.sh categories.fast-search.model sonnet" \
+    "sonnet"
 
   run_test_output "read-config: reads max_iterations" \
     "bash scripts/read-config.sh ralph-loop.max_iterations 100" \
@@ -1110,8 +1131,8 @@ run_config_tests() {
 
   # No config file → default
   run_test_output "read-config: no config → default" \
-    "cd '${cdir3}' && bash scripts/read-config.sh categories.fast-search.model haiku" \
-    "haiku"
+    "cd '${cdir3}' && bash scripts/read-config.sh categories.fast-search.model sonnet" \
+    "sonnet"
 
   cd "${cdir}"
 
@@ -1124,7 +1145,7 @@ run_config_tests() {
 name: test-agent
 description: test agent
 tools: Read
-model: sonnet
+model: haiku
 category: fast-search
 maxTurns: 5
 ---
@@ -1133,13 +1154,13 @@ AGENTEOF
 
   run_test_output "apply-config: --dry-run shows changes" \
     "bash scripts/apply-config.sh --dry-run" \
-    "haiku"
+    "sonnet"
 
   run_test "apply-config: --dry-run does not modify files" \
-    "grep -q '^model: sonnet' agents/test-agent.md"
+    "grep -q '^model: haiku' agents/test-agent.md"
 
   run_test "apply-config: apply changes model" \
-    "bash scripts/apply-config.sh && grep -q '^model: haiku' agents/test-agent.md"
+    "bash scripts/apply-config.sh && grep -q '^model: sonnet' agents/test-agent.md"
 
   echo ""
   echo "  [list-agents-by-category]"
@@ -1492,7 +1513,7 @@ run_team_hook_tests() {
   # Teams disabled → silent
   mkdir -p "${thdir}/.omo"
   cat > "${thdir}/.omo/config.json" <<'CFGEOF'
-{"version":"1","categories":{"fast-search":{"model":"haiku"}},"teams":{"enabled":false}}
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"teams":{"enabled":false}}
 CFGEOF
 
   run_test "teammate-idle-hook: teams disabled → no output" \
@@ -1558,6 +1579,141 @@ CFGEOF
 }
 
 # ═════════════════════════════════════════════════════════════════
+# SECTION 15: Sprint 6 — Core quality fixes
+# ═════════════════════════════════════════════════════════════════
+run_sprint6_tests() {
+  echo "Sprint 6 — Core quality fixes:"
+  echo "───────────────────────────────"
+
+  local s6dir="${tmpdir}/sprint6test"
+  mkdir -p "${s6dir}/.claude/state" "${s6dir}/.omo"
+
+  echo ""
+  echo "  [boulder.enabled config gating]"
+
+  # Config with boulder disabled
+  cat > "${s6dir}/.omo/config.json" <<'S6EOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"boulder":{"enabled":false,"max_attempts":5,"auto_resume":true}}
+S6EOF
+
+  run_test_output "boulder-init: disabled → skips" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/boulder-init.sh' 'disabled test'" \
+    "Disabled via config"
+
+  run_test_fail "boulder-check: disabled → exit 1" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/boulder-check.sh'"
+
+  run_test_output "boulder-attempt: disabled → skips" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/boulder-attempt.sh' working" \
+    "Disabled via config"
+
+  run_test "boulder-complete: disabled → exit 0" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/boulder-complete.sh'"
+
+  # Config with boulder enabled (default)
+  cat > "${s6dir}/.omo/config.json" <<'S6EOF'
+{"version":"1","categories":{"fast-search":{"model":"sonnet"}},"boulder":{"enabled":true,"max_attempts":5,"auto_resume":true}}
+S6EOF
+
+  run_test_output "boulder-init: enabled → initializes" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/boulder-init.sh' 'enabled test'" \
+    "Initialized"
+
+  run_test "boulder-check: enabled → exit 0" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/boulder-check.sh'"
+
+  # Cleanup
+  rm -f "${s6dir}/.claude/state/boulder.json"
+
+  echo ""
+  echo "  [subagent-stop-hook stdin parsing]"
+
+  run_test_output "subagent-stop: parses agent_type from JSON" \
+    "echo '{\"agent_type\":\"build-integrator\"}' | CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/subagent-stop-hook.sh'; echo 'parsed ok'" \
+    "parsed ok"
+
+  run_test "subagent-stop: no boulder-attempt call (no boulder file)" \
+    "echo '{\"agent_type\":\"test-commander\"}' | CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/subagent-stop-hook.sh'"
+
+  echo ""
+  echo "  [escalation-check CLAUDE_PROJECT_DIR]"
+
+  mkdir -p "${s6dir}/.claude/state/briefings"
+  cat > "${s6dir}/.claude/state/briefings/test-brief.md" <<'BEOF'
+- Confidence: HIGH
+- Escalation: none
+BEOF
+
+  run_test_output "escalation-check: uses CLAUDE_PROJECT_DIR" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/escalation-check.sh'" \
+    "No escalation needed"
+
+  cat > "${s6dir}/.claude/state/briefings/low-brief.md" <<'BEOF'
+- Confidence: LOW
+- Escalation: recommended
+BEOF
+
+  run_test_fail "escalation-check: LOW confidence → exit 2" \
+    "CLAUDE_PROJECT_DIR='${s6dir}' bash '${repo_root}/scripts/escalation-check.sh'"
+
+  rm -rf "${s6dir}/.claude/state/briefings"
+
+  echo ""
+  echo "  [notify.sh sanitization]"
+
+  run_test "notify: handles special chars safely" \
+    "bash '${repo_root}/scripts/notify.sh' 'test\"title' 'msg\\with\"quotes'"
+
+  echo ""
+  echo "  [validate-schema 7 hook events]"
+
+  cd "${repo_root}"
+
+  run_test_output "validate-schema: checks all 7 events" \
+    "bash scripts/validate-schema.sh 2>&1" \
+    "All schemas valid"
+
+  # Verify all 7 events are present in hooks.json
+  for evt in Stop SessionStart Notification SubagentStop TeammateIdle TaskCompleted PreCompact; do
+    run_test "hooks.json: contains ${evt}" \
+      "python3 -c \"import json; d=json.load(open('hooks/hooks.json')); assert '${evt}' in d['hooks'], '${evt} missing'\""
+  done
+
+  cd "${tmpdir}"
+
+  echo ""
+  echo "  [ensure-hooks plugin detection]"
+
+  # ensure-hooks should detect plugin hooks relative to script dir
+  run_test_output "ensure-hooks: detects hooks/hooks.json" \
+    "bash '${repo_root}/scripts/ensure-hooks.sh'" \
+    "hooks"
+
+  echo ""
+  echo "  [CLAUDE.md consistency]"
+
+  run_test "CLAUDE.md: oracle escalation says first failed attempt" \
+    "grep -q 'first failed attempt' '${repo_root}/CLAUDE.md'"
+
+  run_test_fail "CLAUDE.md: no 2+ failed attempts for oracle" \
+    "grep -q 'use after 2+ failed attempts' '${repo_root}/CLAUDE.md'"
+
+  run_test "CLAUDE.md: fast-search default is sonnet" \
+    "grep -q 'fast-search.*sonnet' '${repo_root}/CLAUDE.md'"
+
+  echo ""
+  echo "  [fast-search default model]"
+
+  run_test "init-config: fast-search default is sonnet" \
+    "grep -q '\"fast-search\".*\"sonnet\"' '${repo_root}/scripts/init-config.sh'"
+
+  run_test "docs/config.md: fast-search default is sonnet" \
+    "grep -q 'fast-search.*sonnet' '${repo_root}/docs/config.md'"
+
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -1575,6 +1731,7 @@ case "${section}" in
   boulder)     run_boulder_tests ;;
   hookscripts) run_hook_script_tests ;;
   teamhooks) run_team_hook_tests ;;
+  sprint6) run_sprint6_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -1590,10 +1747,11 @@ case "${section}" in
     run_boulder_tests
     run_hook_script_tests
     run_team_hook_tests
+    run_sprint6_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, all"
     exit 1
     ;;
 esac

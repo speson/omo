@@ -4,6 +4,12 @@ set -eu
 
 project_dir="${CLAUDE_PROJECT_DIR:-.}"
 boulder_file="${project_dir}/.claude/state/boulder.json"
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+
+enabled=$(bash "${script_dir}/read-config.sh" boulder.enabled true 2>/dev/null || echo "true")
+if [ "${enabled}" != "true" ]; then
+  exit 0
+fi
 
 if [ ! -f "${boulder_file}" ]; then
   echo "No active boulder to complete." >&2
