@@ -2527,8 +2527,57 @@ AEOF
   run_test "plugin: all scripts are executable" \
     "non_exec=\$(find scripts/ -name '*.sh' ! -perm -u+x 2>/dev/null); [ -z \"\${non_exec}\" ]"
 
-  run_test "plugin: json-helpers.sh has all 3 functions" \
-    "grep -q 'json_str' scripts/json-helpers.sh && grep -q 'json_raw' scripts/json-helpers.sh && grep -q 'json_escape' scripts/json-helpers.sh"
+  run_test "plugin: json-helpers.sh has all 4 functions" \
+    "grep -q 'json_str' scripts/json-helpers.sh && grep -q 'json_raw' scripts/json-helpers.sh && grep -q 'json_escape' scripts/json-helpers.sh && grep -q 'json_num' scripts/json-helpers.sh"
+
+  echo ""
+  echo "  [json_num function]"
+
+  # Create a test JSON file for json_num
+  cat > "${tmpdir}/test-num.json" <<'NJSON'
+{
+  "attempts": 3,
+  "max_attempts": 5,
+  "name": "test",
+  "active": true
+}
+NJSON
+
+  run_test "json_num: reads numeric field" \
+    "source '${repo_root}/scripts/json-helpers.sh' && [ \"\$(json_num attempts '${tmpdir}/test-num.json')\" = '3' ]"
+
+  run_test "json_num: returns 0 for missing field" \
+    "source '${repo_root}/scripts/json-helpers.sh' && [ \"\$(json_num nonexistent '${tmpdir}/test-num.json')\" = '0' ]"
+
+  run_test "json_num: returns 0 for string field" \
+    "source '${repo_root}/scripts/json-helpers.sh' && result=\$(json_num name '${tmpdir}/test-num.json') && [ \"\${result}\" = '0' ] || [ \"\${result}\" = 'test' ]"
+
+  echo ""
+  echo "  [json_raw improved fallback]"
+
+  run_test "json_raw: reads boolean" \
+    "source '${repo_root}/scripts/json-helpers.sh' && [ \"\$(json_raw active '${tmpdir}/test-num.json')\" = 'true' ]"
+
+  run_test "json_raw: reads number" \
+    "source '${repo_root}/scripts/json-helpers.sh' && [ \"\$(json_raw attempts '${tmpdir}/test-num.json')\" = '3' ]"
+
+  echo ""
+  echo "  [hook scripts source json-helpers]"
+
+  run_test "hook: pre-compact sources json-helpers" \
+    "grep -q 'source.*json-helpers' '${repo_root}/scripts/pre-compact-hook.sh'"
+
+  run_test "hook: subagent-stop sources json-helpers" \
+    "grep -q 'source.*json-helpers' '${repo_root}/scripts/subagent-stop-hook.sh'"
+
+  run_test "hook: task-completed sources json-helpers" \
+    "grep -q 'source.*json-helpers' '${repo_root}/scripts/task-completed-hook.sh'"
+
+  run_test "hook: teammate-idle sources json-helpers" \
+    "grep -q 'source.*json-helpers' '${repo_root}/scripts/teammate-idle-hook.sh'"
+
+  run_test "hook: no inline sed escape in hooks" \
+    "! grep -l 'sed.*s/\\\\\\\\/.*s/\"/.*\\\\\\\\\"' '${repo_root}/scripts/'*-hook.sh 2>/dev/null | grep -qv ralph"
 
   cd "${tmpdir}"
   echo ""

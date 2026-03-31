@@ -8,6 +8,9 @@ set -eu
 project_dir="${CLAUDE_PROJECT_DIR:-.}"
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
+# shellcheck source=json-helpers.sh
+source "${script_dir}/json-helpers.sh"
+
 # Read stdin JSON
 input=""
 if [ ! -t 0 ]; then
@@ -38,6 +41,6 @@ if command -v jq >/dev/null 2>&1; then
     --arg ctx "${context}" \
     '{hookSpecificOutput: {hookEventName: "TeammateIdle", additionalContext: $ctx}}'
 else
-  escaped_ctx=$(printf '%s' "${context}" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  escaped_ctx=$(json_escape "${context}")
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"TeammateIdle\",\"additionalContext\":\"${escaped_ctx}\"}}"
 fi

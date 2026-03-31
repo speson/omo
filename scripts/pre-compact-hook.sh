@@ -7,6 +7,9 @@ set -eu
 project_dir="${CLAUDE_PROJECT_DIR:-.}"
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
+# shellcheck source=json-helpers.sh
+source "${script_dir}/json-helpers.sh"
+
 # Read stdin JSON (drained; no fields currently inspected)
 # shellcheck disable=SC2034
 input=""
@@ -20,17 +23,10 @@ state_msg=""
 # Check for active boulder task
 if bash "${script_dir}/boulder-check.sh" >/dev/null 2>&1; then
   boulder_file="${project_dir}/.claude/state/boulder.json"
-  if command -v jq >/dev/null 2>&1; then
-    task_slug=$(jq -r '.task_slug' "${boulder_file}")
-    goal=$(jq -r '.goal' "${boulder_file}")
-    attempts=$(jq -r '.attempts' "${boulder_file}")
-    max_attempts=$(jq -r '.max_attempts' "${boulder_file}")
-  else
-    task_slug=$(grep -o '"task_slug" *: *"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
-    goal=$(grep -o '"goal" *: *"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
-    attempts=$(grep -o '"attempts" *: *[0-9]*' "${boulder_file}" | grep -o '[0-9]*$')
-    max_attempts=$(grep -o '"max_attempts" *: *[0-9]*' "${boulder_file}" | grep -o '[0-9]*$')
-  fi
+  task_slug=$(json_str task_slug "${boulder_file}")
+  goal=$(json_str goal "${boulder_file}")
+  attempts=$(json_num attempts "${boulder_file}")
+  max_attempts=$(json_num max_attempts "${boulder_file}")
   state_msg="Active boulder: ${task_slug} (attempt ${attempts}/${max_attempts}). Goal: ${goal}."
 fi
 
@@ -78,6 +74,6 @@ if command -v jq >/dev/null 2>&1; then
     --arg msg "${system_msg}" \
     '{hookSpecificOutput: {hookEventName: "PreCompact", systemMessage: $msg}}'
 else
-  escaped_msg=$(printf '%s' "${system_msg}" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  escaped_msg=$(json_escape "${system_msg}")
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreCompact\",\"systemMessage\":\"${escaped_msg}\"}}"
 fi

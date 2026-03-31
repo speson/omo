@@ -2,6 +2,9 @@
 # Check agent briefings for escalation signals
 # Usage: escalation-check.sh [briefing-file]
 # Parses Confidence and Escalation metadata from agent briefings
+# Exit codes:
+#   0 = No escalation needed
+#   2 = Escalation recommended (LOW confidence or escalation=recommended)
 set -eu
 
 BRIEFINGS_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/state/briefings"

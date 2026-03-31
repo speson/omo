@@ -37,8 +37,8 @@ if [ "${auto_resume}" != "true" ]; then
 fi
 
 task_slug=$(json_str task_slug "${boulder_file}")
-attempts=$(json_raw attempts "${boulder_file}")
-max_attempts=$(json_raw max_attempts "${boulder_file}")
+attempts=$(json_num attempts "${boulder_file}")
+max_attempts=$(json_num max_attempts "${boulder_file}")
 
 context="[omo] Pending task: ${task_slug} (attempt ${attempts}/${max_attempts}). Run #rw to resume."
 
@@ -48,6 +48,6 @@ if command -v jq >/dev/null 2>&1; then
     --arg ctx "${context}" \
     '{hookSpecificOutput: {hookEventName: "Notification", additionalContext: $ctx}}'
 else
-  escaped_ctx=$(printf '%s' "${context}" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  escaped_ctx=$(json_escape "${context}")
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"Notification\",\"additionalContext\":\"${escaped_ctx}\"}}"
 fi

@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Mark a Boulder task as complete
+# Exit codes:
+#   0 = Boulder completed (or disabled via config)
+#   1 = No active boulder to complete
 set -eu
 
 project_dir="${CLAUDE_PROJECT_DIR:-.}"
 boulder_file="${project_dir}/.claude/state/boulder.json"
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+source "${script_dir}/json-helpers.sh"
 
 enabled=$(bash "${script_dir}/read-config.sh" boulder.enabled true 2>/dev/null || echo "true")
 if [ "${enabled}" != "true" ]; then
@@ -27,12 +31,19 @@ if command -v jq >/dev/null 2>&1; then
   ' "${boulder_file}" > "${tmp_file}"
   mv "${tmp_file}" "${boulder_file}"
 else
-  sed -i.bak \
-    -e 's/"active" *: *true/"active": false/' \
-    -e "s/\"last_outcome\" *: *\"[^\"]*\"/\"last_outcome\": \"completed\"/" \
-    -e "s/\"updated_at\" *: *\"[^\"]*\"/\"updated_at\": \"${now}\"/" \
-    "${boulder_file}"
-  rm -f "${boulder_file}.bak"
+  if [ "$(uname)" = "Darwin" ]; then
+    sed -i '' \
+      -e 's/"active" *: *true/"active": false/' \
+      -e "s/\"last_outcome\" *: *\"[^\"]*\"/\"last_outcome\": \"completed\"/" \
+      -e "s/\"updated_at\" *: *\"[^\"]*\"/\"updated_at\": \"${now}\"/" \
+      "${boulder_file}"
+  else
+    sed -i \
+      -e 's/"active" *: *true/"active": false/' \
+      -e "s/\"last_outcome\" *: *\"[^\"]*\"/\"last_outcome\": \"completed\"/" \
+      -e "s/\"updated_at\" *: *\"[^\"]*\"/\"updated_at\": \"${now}\"/" \
+      "${boulder_file}"
+  fi
 fi
 
 # Read slug for output
@@ -40,8 +51,8 @@ if command -v jq >/dev/null 2>&1; then
   slug=$(jq -r '.task_slug' "${boulder_file}")
   attempts=$(jq -r '.attempts' "${boulder_file}")
 else
-  slug=$(grep -o '"task_slug" *: *"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
-  attempts=$(grep -o '"attempts" *: *[0-9]*' "${boulder_file}" | sed 's/.*: *//')
+  slug=$(json_str task_slug "${boulder_file}")
+  attempts=$(json_num attempts "${boulder_file}")
 fi
 
 echo "[Boulder] Completed: ${slug} after ${attempts} attempt(s)"

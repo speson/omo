@@ -33,8 +33,8 @@ source "$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)/json-helpers.sh"
 
 task_slug=$(json_str task_slug "${boulder_file}")
 goal=$(json_str goal "${boulder_file}")
-attempts=$(json_raw attempts "${boulder_file}")
-max_attempts=$(json_raw max_attempts "${boulder_file}")
+attempts=$(json_num attempts "${boulder_file}")
+max_attempts=$(json_num max_attempts "${boulder_file}")
 last_outcome=$(json_str last_outcome "${boulder_file}")
 
 # Build context message (max 5 lines)
@@ -59,6 +59,6 @@ if command -v jq >/dev/null 2>&1; then
     '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: $ctx}}'
 else
   # Manual JSON construction
-  escaped_ctx=$(printf '%b' "${context}" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' ')
+  escaped_ctx=$(json_escape "$(printf '%b' "${context}")")
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"${escaped_ctx}\"}}"
 fi
