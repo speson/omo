@@ -62,6 +62,9 @@ All skills support auto-intercept via `#shortcut` patterns. Type `#ulw auth 구�
 | `#rel` | `/omo:release <version>` | Full release pipeline (commit, push, tag, release, marketplace) |
 | `#sync` | `/omo:docs-sync [scope]` | Sync README and user guide with current project state |
 | `#ev` | `/omo:evolve [focus]` | Automated self-improvement pipeline (6-agent analysis → sprint plan) |
+| `#uwl` | `/omo:ultrawork-loop [goal]` | Ultrawork with ralph-loop enforcement — does not stop until done |
+| `#dh` | `/omo:deep-hunt <symptom>` | Parallel bug-hunt + deepsearch investigation |
+| `#ss` | `/omo:status` | Unified omo status dashboard |
 
 Configuration
 

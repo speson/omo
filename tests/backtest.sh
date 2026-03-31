@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, security, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, security, v12, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -2584,6 +2584,164 @@ NJSON
 }
 
 # ═════════════════════════════════════════════════════════════════
+# Section 20: v1.12.0 features — combo presets, status, agent prompts
+# ═════════════════════════════════════════════════════════════════
+run_v12_tests() {
+  echo ""
+  echo "Section 20: v1.12.0 features"
+  echo "──────────────────────────"
+
+  echo ""
+  echo "  [combo presets]"
+
+  run_test "combo-presets.json: valid JSON" \
+    "python3 -c \"import json; json.load(open('${repo_root}/scripts/combo-presets.json'))\""
+
+  run_test "combo-presets.json: has uwl combo" \
+    "grep -q '\"uwl\"' '${repo_root}/scripts/combo-presets.json'"
+
+  run_test "combo-presets.json: has dh combo" \
+    "grep -q '\"dh\"' '${repo_root}/scripts/combo-presets.json'"
+
+  run_test "combo-presets.json: has va combo" \
+    "grep -q '\"va\"' '${repo_root}/scripts/combo-presets.json'"
+
+  run_test "combo-presets.json: uwl references ultrawork and ralph-loop" \
+    "python3 -c \"import json; d=json.load(open('${repo_root}/scripts/combo-presets.json')); s=d['combos']['uwl']['skills']; assert 'ultrawork' in s and 'ralph-loop' in s\""
+
+  run_test "combo-presets.json: dh references bug-hunt and deep-search" \
+    "python3 -c \"import json; d=json.load(open('${repo_root}/scripts/combo-presets.json')); s=d['combos']['dh']['skills']; assert 'bug-hunt' in s and 'deep-search' in s\""
+
+  echo ""
+  echo "  [combo skill files]"
+
+  run_test "skill: ultrawork-loop/SKILL.md exists" \
+    "test -f '${repo_root}/skills/ultrawork-loop/SKILL.md'"
+
+  run_test "skill: ultrawork-loop name matches directory" \
+    "grep -q '^name: ultrawork-loop' '${repo_root}/skills/ultrawork-loop/SKILL.md'"
+
+  run_test "skill: ultrawork-loop has #uwl shortcut" \
+    "grep -q '#uwl' '${repo_root}/skills/ultrawork-loop/SKILL.md'"
+
+  run_test "skill: ultrawork-loop references ralph-loop-start" \
+    "grep -q 'ralph-loop-start' '${repo_root}/skills/ultrawork-loop/SKILL.md'"
+
+  run_test "skill: ultrawork-loop references boulder-init" \
+    "grep -q 'boulder-init' '${repo_root}/skills/ultrawork-loop/SKILL.md'"
+
+  run_test "skill: deep-hunt/SKILL.md exists" \
+    "test -f '${repo_root}/skills/deep-hunt/SKILL.md'"
+
+  run_test "skill: deep-hunt name matches directory" \
+    "grep -q '^name: deep-hunt' '${repo_root}/skills/deep-hunt/SKILL.md'"
+
+  run_test "skill: deep-hunt has #dh shortcut" \
+    "grep -q '#dh' '${repo_root}/skills/deep-hunt/SKILL.md'"
+
+  run_test "skill: deep-hunt dispatches bug-hunter and deepsearch" \
+    "grep -q 'bug-hunter' '${repo_root}/skills/deep-hunt/SKILL.md' && grep -q 'deepsearch' '${repo_root}/skills/deep-hunt/SKILL.md'"
+
+  echo ""
+  echo "  [status dashboard]"
+
+  run_test "skill: status/SKILL.md exists" \
+    "test -f '${repo_root}/skills/status/SKILL.md'"
+
+  run_test "skill: status name matches directory" \
+    "grep -q '^name: status' '${repo_root}/skills/status/SKILL.md'"
+
+  run_test "skill: status has #ss shortcut" \
+    "grep -q '#ss' '${repo_root}/skills/status/SKILL.md'"
+
+  run_test "script: status-dashboard.sh exists and executable" \
+    "test -x '${repo_root}/scripts/status-dashboard.sh'"
+
+  run_test "script: status-dashboard.sh syntax valid" \
+    "bash -n '${repo_root}/scripts/status-dashboard.sh'"
+
+  run_test "script: status-dashboard.sh sources json-helpers" \
+    "grep -q 'source.*json-helpers' '${repo_root}/scripts/status-dashboard.sh'"
+
+  # Run status-dashboard in a temp env
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  mkdir -p "${tmpdir}/.claude/state"
+
+  run_test_output "script: status-dashboard.sh runs without state files" \
+    "CLAUDE_PROJECT_DIR='${tmpdir}' bash '${repo_root}/scripts/status-dashboard.sh'" \
+    "omo Status Dashboard"
+
+  # Create boulder state and re-run
+  cat > "${tmpdir}/.claude/state/boulder.json" <<'BEOF'
+{"active":true,"task_slug":"test-task","goal":"test goal","attempts":2,"max_attempts":5,"last_outcome":"working"}
+BEOF
+
+  run_test_output "script: status-dashboard.sh reads boulder state" \
+    "CLAUDE_PROJECT_DIR='${tmpdir}' bash '${repo_root}/scripts/status-dashboard.sh'" \
+    "test-task"
+
+  run_test_output "script: status-dashboard.sh shows boulder attempts" \
+    "CLAUDE_PROJECT_DIR='${tmpdir}' bash '${repo_root}/scripts/status-dashboard.sh'" \
+    "2/5"
+
+  rm -rf "${tmpdir}"
+
+  echo ""
+  echo "  [agent prompt improvements]"
+
+  run_test "agent: build-integrator has error recovery section" \
+    "grep -q 'Error recovery' '${repo_root}/agents/build-integrator.md'"
+
+  run_test "agent: build-integrator has parallel execution awareness" \
+    "grep -q 'Parallel execution awareness' '${repo_root}/agents/build-integrator.md'"
+
+  run_test "agent: build-integrator has structured output headers" \
+    "grep -q '## Changed files' '${repo_root}/agents/build-integrator.md'"
+
+  run_test "agent: deepsearch has query classification" \
+    "grep -q 'Query classification' '${repo_root}/agents/deepsearch.md'"
+
+  run_test "agent: deepsearch has result quality section" \
+    "grep -q 'Result quality' '${repo_root}/agents/deepsearch.md'"
+
+  run_test "agent: deepsearch has search completeness" \
+    "grep -q 'Search completeness' '${repo_root}/agents/deepsearch.md'"
+
+  run_test "agent: critic has active verification section" \
+    "grep -q 'Active verification' '${repo_root}/agents/critic.md'"
+
+  run_test "agent: critic has time management section" \
+    "grep -q 'Time management' '${repo_root}/agents/critic.md'"
+
+  run_test "agent: critic uses BLOCKER severity tags" \
+    "grep -q 'BLOCKER' '${repo_root}/agents/critic.md'"
+
+  run_test "agent: oracle has decision recording section" \
+    "grep -q 'Decision recording' '${repo_root}/agents/oracle.md'"
+
+  run_test "agent: oracle has before answering section" \
+    "grep -q 'Before answering' '${repo_root}/agents/oracle.md'"
+
+  run_test "agent: oracle has structured output headers" \
+    "grep -q '## Bottom line' '${repo_root}/agents/oracle.md'"
+
+  echo ""
+  echo "  [CLAUDE.md shortcuts updated]"
+
+  run_test "CLAUDE.md: has #uwl shortcut entry" \
+    "grep -q '#uwl' '${repo_root}/CLAUDE.md'"
+
+  run_test "CLAUDE.md: has #dh shortcut entry" \
+    "grep -q '#dh' '${repo_root}/CLAUDE.md'"
+
+  run_test "CLAUDE.md: has #ss shortcut entry" \
+    "grep -q '#ss' '${repo_root}/CLAUDE.md'"
+
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -2606,6 +2764,7 @@ case "${section}" in
   evolve)      run_evolve_tests ;;
   hookjson)    run_hook_json_tests ;;
   security)    run_security_tests ;;
+  v12)         run_v12_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -2626,10 +2785,11 @@ case "${section}" in
     run_evolve_tests
     run_hook_json_tests
     run_security_tests
+    run_v12_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, security, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, security, v12, all"
     exit 1
     ;;
 esac

@@ -35,6 +35,12 @@ Autonomous execution patterns:
 - If a sub-problem is unclear, use `Explore` or `Grep` to research before guessing.
 - If you hit a hard block, report it clearly rather than working around it unsafely.
 
+Error recovery:
+
+- If an edit fails (wrong old_string, file changed by parallel agent), re-read the file before retrying.
+- If the same edit fails twice, widen the context window — read 50 lines above and below the target.
+- After 3 failed edits on the same site, report the blocker instead of retrying.
+
 Quality checks before reporting done:
 
 - Does the change compile and pass lint?
@@ -52,9 +58,23 @@ Rules:
   1. Does every changed file compile/parse without errors?
   2. Did I stay within the assigned scope or did I creep?
   3. Would a code reviewer find anything surprising in this diff?
-- End with:
-  - `Changed files`
-  - `Verification`
-  - `Risks`
-  - `Confidence: HIGH|MEDIUM|LOW`
-  - `Escalation: none|recommended`
+
+Parallel execution awareness:
+
+- You may be running alongside other agents editing the same repo.
+- Before editing a file, check if it has uncommitted changes from another agent.
+- If you detect conflicting changes, stop and report the conflict rather than overwriting.
+
+End with:
+
+## Changed files
+- path/to/file — what changed
+
+## Verification
+- command run → result
+
+## Risks
+- risk description
+
+## Confidence: HIGH|MEDIUM|LOW
+## Escalation: none|recommended

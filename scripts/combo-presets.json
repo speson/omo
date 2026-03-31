@@ -1,0 +1,22 @@
+{
+  "combos": {
+    "uwl": {
+      "name": "ultrawork-loop",
+      "skills": ["ultrawork", "ralph-loop"],
+      "shortcut": "#uwl",
+      "description": "Ultrawork with Ralph Loop enforcement — persistent execution that won't stop until done"
+    },
+    "dh": {
+      "name": "deep-hunt",
+      "skills": ["bug-hunt", "deep-search"],
+      "shortcut": "#dh",
+      "description": "Bug hunt with parallel deepsearch — comprehensive failure investigation"
+    },
+    "va": {
+      "name": "verify-all",
+      "skills": ["ship-check", "diff-review"],
+      "shortcut": "#va",
+      "description": "Already exists — ship-check + diff-review in parallel"
+    }
+  }
+}
