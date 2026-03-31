@@ -16,14 +16,21 @@ BRIEFINGS_DIR=".claude/state/briefings"
 mkdir -p "${BRIEFINGS_DIR}"
 
 timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-filename="${BRIEFINGS_DIR}/${slug}-${agent}-$(date -u +%Y%m%d-%H%M%S).md"
+# Sanitize agent/slug for safe filename (replace problematic chars including newlines)
+safe_fn_agent=$(printf '%s' "${agent}" | tr '/\\:\n' '----')
+safe_fn_slug=$(printf '%s' "${slug}" | tr '/\\:\n' '----')
+filename="${BRIEFINGS_DIR}/${safe_fn_slug}-${safe_fn_agent}-$(date -u +%Y%m%d-%H%M%S).md"
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 template="${script_dir}/../templates/briefing.md"
 
 if [ -f "${template}" ]; then
-  sed -e "s/\[agent-name\]/${agent}/g" \
-      -e "s/\[task-description\]/${slug}/g" \
+  # Sanitize for sed replacement (strip newlines, escape \, /, &)
+  sed_safe() { printf '%s' "$1" | tr '\n' ' ' | sed 's/[\\\/&]/\\&/g'; }
+  safe_agent=$(sed_safe "${agent}")
+  safe_slug=$(sed_safe "${slug}")
+  sed -e "s/\[agent-name\]/${safe_agent}/g" \
+      -e "s/\[task-description\]/${safe_slug}/g" \
       -e "s/\[ISO timestamp\]/${timestamp}/g" \
       "${template}" > "${filename}"
 else

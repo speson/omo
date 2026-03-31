@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, security, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -2404,6 +2404,137 @@ BEOF
 }
 
 # ═════════════════════════════════════════════════════════════════
+# SECTION 19: Security hardening and integration
+# ═════════════════════════════════════════════════════════════════
+run_security_tests() {
+  echo "Security hardening and integration:"
+  echo "────────────────────────────────────"
+
+  local sdir="${tmpdir}/security"
+  mkdir -p "${sdir}/.claude/state/briefings"
+
+  echo ""
+  echo "  [write-briefing sed injection defense]"
+
+  cd "${sdir}"
+
+  # Agent name with sed metacharacters: / & \
+  run_test "briefing: agent with slash in name" \
+    "bash '${repo_root}/scripts/write-briefing.sh' 'agent/sub' 'task-a' 'test' | grep -q '.md'"
+
+  run_test "briefing: slash agent - file contains agent name" \
+    "grep -q 'agent/sub' .claude/state/briefings/task-a-*.md"
+
+  run_test "briefing: slug with ampersand" \
+    "bash '${repo_root}/scripts/write-briefing.sh' 'builder' 'fix&deploy' 'test' | grep -q '.md'"
+
+  run_test "briefing: slug with backslash" \
+    "bash '${repo_root}/scripts/write-briefing.sh' 'builder' 'path\\\\dir' 'test' | grep -q '.md'"
+
+  echo ""
+  echo "  [apply-config category validation]"
+
+  local cdir="${tmpdir}/config-sec"
+  mkdir -p "${cdir}/.omo" "${cdir}/agents" "${cdir}/scripts"
+
+  # Copy the script so repo_root resolves to cdir
+  cp "${repo_root}/scripts/apply-config.sh" "${cdir}/scripts/"
+
+  # Create a config with valid + injected categories
+  cat > "${cdir}/.omo/config.json" <<'CEOF'
+{
+  "version": "1",
+  "categories": {
+    "fast-search": { "model": "haiku" },
+    "evil-injection": { "model": "opus" }
+  }
+}
+CEOF
+
+  # Create a mock agent with an invalid category
+  cat > "${cdir}/agents/evil.md" <<'AEOF'
+---
+name: evil
+description: test agent
+model: sonnet
+category: evil-injection
+tools: Read
+---
+test
+AEOF
+
+  # Create a mock agent with a valid category
+  cat > "${cdir}/agents/good.md" <<'AEOF'
+---
+name: good
+description: test agent
+model: sonnet
+category: fast-search
+tools: Read
+---
+test
+AEOF
+
+  cd "${cdir}"
+  run_test_output "apply-config: rejects invalid category" \
+    "bash '${cdir}/scripts/apply-config.sh' --dry-run 2>&1" \
+    "SKIP"
+
+  run_test_output "apply-config: accepts valid category" \
+    "bash '${cdir}/scripts/apply-config.sh' --dry-run 2>&1" \
+    "haiku"
+
+  echo ""
+  echo "  [json_escape shared function]"
+
+  cd "${tmpdir}"
+
+  # Source json-helpers and test json_escape
+  run_test "json_escape: basic string" \
+    "source '${repo_root}/scripts/json-helpers.sh' && result=\$(json_escape 'hello world') && [ \"\${result}\" = 'hello world' ]"
+
+  run_test "json_escape: escapes double quotes" \
+    "source '${repo_root}/scripts/json-helpers.sh' && result=\$(json_escape 'say \"hi\"') && echo \"\${result}\" | grep -q '\\\\\"'"
+
+  run_test "json_escape: escapes backslash" \
+    "source '${repo_root}/scripts/json-helpers.sh' && result=\$(json_escape 'path\\\\dir') && echo \"\${result}\" | grep -q '\\\\\\\\'"
+
+  run_test "json_escape: strips newlines" \
+    "source '${repo_root}/scripts/json-helpers.sh' && result=\$(json_escape \$'line1\nline2') && [ \"\$(printf '%s' \"\${result}\" | wc -l)\" -eq 0 ]"
+
+  # Test that ralph-loop-start.sh still works after json_escape extraction
+  local rdir="${tmpdir}/ralph-sec"
+  mkdir -p "${rdir}/.claude/state"
+  cd "${rdir}"
+
+  run_test "ralph-loop: works with sourced json_escape" \
+    "bash '${repo_root}/scripts/ralph-loop-start.sh' 'test task' && [ -f .claude/state/ralph-loop.json ]"
+
+  run_test "ralph-loop: prompt with quotes in no-jq fallback" \
+    "PATH='/usr/bin:/bin' bash '${repo_root}/scripts/ralph-loop-start.sh' 'say hi' && grep -q 'say hi' .claude/state/ralph-loop.json"
+
+  echo ""
+  echo "  [CLI integration]"
+
+  cd "${repo_root}"
+
+  run_test "plugin: plugin.json is valid JSON" \
+    "cat .claude-plugin/plugin.json | python3 -c 'import json,sys; json.load(sys.stdin)' 2>/dev/null || jq '.' .claude-plugin/plugin.json >/dev/null"
+
+  run_test "plugin: marketplace.json is valid JSON" \
+    "cat .claude-plugin/marketplace.json | python3 -c 'import json,sys; json.load(sys.stdin)' 2>/dev/null || jq '.' .claude-plugin/marketplace.json >/dev/null"
+
+  run_test "plugin: all scripts are executable" \
+    "non_exec=\$(find scripts/ -name '*.sh' ! -perm -u+x 2>/dev/null); [ -z \"\${non_exec}\" ]"
+
+  run_test "plugin: json-helpers.sh has all 3 functions" \
+    "grep -q 'json_str' scripts/json-helpers.sh && grep -q 'json_raw' scripts/json-helpers.sh && grep -q 'json_escape' scripts/json-helpers.sh"
+
+  cd "${tmpdir}"
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -2425,6 +2556,7 @@ case "${section}" in
   nojq)        run_nojq_tests ;;
   evolve)      run_evolve_tests ;;
   hookjson)    run_hook_json_tests ;;
+  security)    run_security_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -2444,10 +2576,11 @@ case "${section}" in
     run_nojq_tests
     run_evolve_tests
     run_hook_json_tests
+    run_security_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, security, all"
     exit 1
     ;;
 esac

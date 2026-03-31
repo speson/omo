@@ -25,6 +25,7 @@ done
 # Read config for defaults
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH='' cd -- "${script_dir}/.." && pwd)
+source "${script_dir}/json-helpers.sh"
 max_attempts=5
 auto_resume=true
 
@@ -93,13 +94,14 @@ if command -v jq >/dev/null 2>&1; then
       updated_at: $updated_at
     }' > "${boulder_file}"
 else
-  # JSON-escape the goal
-  escaped_goal=$(printf '%s' "${goal}" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g' | tr '\n' ' ')
+  # JSON-escape the goal (uses shared json_escape from json-helpers.sh)
+  escaped_goal=$(json_escape "${goal}")
+  escaped_task_file=$(json_escape "${task_file}")
   cat > "${boulder_file}" <<BEOF
 {
   "active": true,
   "task_slug": "${slug}",
-  "task_file": "${task_file}",
+  "task_file": "${escaped_task_file}",
   "goal": "${escaped_goal}",
   "attempts": 0,
   "max_attempts": ${max_attempts},

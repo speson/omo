@@ -42,8 +42,8 @@ fi
 
 mkdir -p "${STATE_DIR}"
 
-# Escape special characters for safe JSON embedding (fallback path)
-json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g' | tr '\n' ' '; }
+# Source shared JSON helpers (includes json_escape for fallback path)
+source "$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)/json-helpers.sh"
 
 if command -v jq >/dev/null 2>&1; then
   jq -n \

@@ -30,8 +30,19 @@ else
   exit 1
 fi
 
+valid_categories="fast-search verification implementation planning deep-reasoning research media"
+
 config_model_for_category() {
   local cat="${1}"
+  # Validate category against whitelist before interpolation
+  local valid=0
+  for vc in ${valid_categories}; do
+    [ "${cat}" = "${vc}" ] && valid=1 && break
+  done
+  if [ "${valid}" -eq 0 ]; then
+    echo ""
+    return
+  fi
   if [ "${USE_JQ}" -eq 1 ]; then
     jq -r ".categories[\"${cat}\"].model // empty" "${config_file}" 2>/dev/null || true
   else
@@ -81,6 +92,15 @@ for agent_file in "${agents_dir}"/*.md; do
 
   # Read current model from frontmatter
   current_model=$(grep '^model:' "${agent_file}" 2>/dev/null | head -1 | sed 's/^model:[[:space:]]*//' || true)
+
+  # Validate model value before sed interpolation
+  case "${new_model}" in
+    haiku|sonnet|opus) ;;
+    *)
+      echo "  ${agent_name}: SKIP (invalid model '${new_model}')"
+      continue
+      ;;
+  esac
 
   if [ "${current_model}" = "${new_model}" ]; then
     echo "  ${agent_name}: ${current_model} (unchanged)"
