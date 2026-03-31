@@ -20,7 +20,7 @@
 }
 ```
 
-### 스크립트 35개
+### 스크립트 42개
 
 | 스크립트 | 용도 |
 |---------|------|
@@ -31,10 +31,12 @@
 | `boulder-init.sh` | Boulder 크로스세션 태스크 초기화 |
 | `boulder-status.sh` | Boulder 상태 사람이 읽을 수 있는 형태로 출력 |
 | `check-skill-disabled.sh` | config.json disabled_skills 배열로 스킬 비활성화 여부 확인 |
+| `combo-presets.json` | 검증된 스킬 조합 정의 (uwl, dh, va) |
 | `ensure-hooks.sh` | Stop 훅 자동 등록 |
 | `escalation-check.sh` | 브리핑의 Confidence/Escalation 파싱 |
 | `idle-resume-hook.sh` | Notification 훅 — 유휴 시 Boulder 태스크 재개 넛지 |
 | `init-config.sh` | 기본 .omo/config.json 생성 |
+| `json-helpers.sh` | JSON 필드 읽기/이스케이프 공유 라이브러리 (json_str, json_raw, json_num, json_escape) |
 | `latest-context.sh` | 현재 세션 컨텍스트 출력 |
 | `list-agents-by-category.sh` | 카테고리별 에이전트 목록 출력 (프론트매터 파싱) |
 | `log-task-event.sh` | 태스크 이력 기록 (생성/완료/취소) |
@@ -52,6 +54,7 @@
 | `read-config.sh` | .omo/config.json에서 dot-notation 경로로 값 읽기 |
 | `release.sh` | 릴리스 자동화 (테스트→빌드→태그→push) |
 | `session-context-hook.sh` | SessionStart 훅 — 세션 시작 시 Boulder 태스크 컨텍스트 주입 |
+| `status-dashboard.sh` | boulder, ralph-loop, 작업, 팀, 메모리 통합 상태 대시보드 |
 | `statusline.sh` | 셸 프롬프트 상태 표시줄 |
 | `subagent-stop-hook.sh` | SubagentStop 훅 — 진행 기록 및 oracle 에스컬레이션 권고 |
 | `task-completed-hook.sh` | TaskCompleted 훅 — 완료 알림 및 차단 해제 태스크 확인 |
@@ -73,6 +76,7 @@
 │   ├── decisions.md        <- oracle이 기록
 │   ├── failures.md         <- bug-hunter가 기록
 │   └── index.md            <- 자동 생성 인덱스
+├── improvements/           <- 자동 개선 분석 보고서
 ├── task-history.log        <- 태스크 이력 로그
 ├── repo-map.md             <- 레포지토리 맵
 ├── ralph-loop.json         <- Ralph Loop 상태 머신
@@ -616,6 +620,14 @@ Cycle 3:
 | **pr-review** | security-auditor, test-commander | X |
 | **onboard** | repo-librarian, repo-librarian-deep | X |
 | **tool-check** | (단독) | X |
+| **verify-all** | ship-check + diff-review 에이전트 (합성 스킬) | X |
+| **release** | (단독, 스크립트 호출) | X |
+| **docs-sync** | docs-keeper, deepsearch | X |
+| **evolve** | deepsearch, repo-librarian, oracle, perf-analyst, security-auditor, critic | X |
+| **self-test** | (단독, 스크립트 호출) | X |
+| **ultrawork-loop** | ultrawork + ralph-loop 통합 (전체 에이전트 + Stop 훅) | X |
+| **deep-hunt** | bug-hunter, deepsearch | X |
+| **status** | (단독, 스크립트 호출) | X |
 
 ---
 
