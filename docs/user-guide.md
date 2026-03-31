@@ -20,30 +20,45 @@
 }
 ```
 
-### 스크립트 37개
+### 스크립트 35개
 
 | 스크립트 | 용도 |
 |---------|------|
-| `build-marketplace.sh` | 마켓플레이스 배포 번들 빌드 (plugin.json에서 버전 동적 추출) |
+| `apply-config.sh` | config.json 카테고리 모델 설정을 에이전트 프론트매터에 적용 |
+| `boulder-attempt.sh` | Boulder 시도 결과 기록 |
+| `boulder-check.sh` | Boulder 태스크 재개 가능 여부 확인 |
+| `boulder-complete.sh` | Boulder 태스크 완료 처리 |
+| `boulder-init.sh` | Boulder 크로스세션 태스크 초기화 |
+| `boulder-status.sh` | Boulder 상태 사람이 읽을 수 있는 형태로 출력 |
+| `check-skill-disabled.sh` | config.json disabled_skills 배열로 스킬 비활성화 여부 확인 |
+| `ensure-hooks.sh` | Stop 훅 자동 등록 |
+| `escalation-check.sh` | 브리핑의 Confidence/Escalation 파싱 |
+| `idle-resume-hook.sh` | Notification 훅 — 유휴 시 Boulder 태스크 재개 넛지 |
+| `init-config.sh` | 기본 .omo/config.json 생성 |
 | `latest-context.sh` | 현재 세션 컨텍스트 출력 |
+| `list-agents-by-category.sh` | 카테고리별 에이전트 목록 출력 (프론트매터 파싱) |
+| `log-task-event.sh` | 태스크 이력 기록 (생성/완료/취소) |
 | `mcp-doctor.sh` | MCP 설정 진단 |
 | `new-task-note.sh` | 새 작업 노트 생성 |
-| `statusline.sh` | 셸 프롬프트 상태 표시줄 |
-| `ralph-loop-start.sh` | Ralph Loop 초기화 (jq 우선, grep 폴백) |
-| `ralph-loop-guard.sh` | Stop 훅 — 3단계 상태 머신 |
-| `ralph-loop-done.sh` | "작업 완료" 신호 |
-| `ralph-loop-verified.sh` | "Oracle 승인" 신호 |
-| `ralph-loop-reject.sh` | "Oracle 거부" — 작업 재개 |
-| `ralph-loop-cancel.sh` | 루프 강제 취소 |
-| `ensure-hooks.sh` | Stop 훅 자동 등록 |
-| `check-version.sh` | plugin.json ↔ marketplace.json 버전 일관성 검증 |
-| `log-task-event.sh` | 태스크 이력 기록 (생성/완료/취소) |
-| `write-briefing.sh` | 에이전트 브리핑 문서 작성 |
-| `read-briefings.sh` | 최근 N개 브리핑 읽기 |
-| `release.sh` | 릴리스 자동화 (테스트→빌드→태그→push) |
-| `escalation-check.sh` | 브리핑의 Confidence/Escalation 파싱 |
 | `notify.sh` | OS 알림 (macOS osascript / Linux notify-send) |
-| `validate-schema.sh` | 플러그인 구조 + 프론트매터 스키마 검증 |
+| `pre-compact-hook.sh` | PreCompact 훅 — 컨텍스트 압축 전 중요 상태 시스템 메시지에 보존 |
+| `ralph-loop-cancel.sh` | 루프 강제 취소 |
+| `ralph-loop-done.sh` | "작업 완료" 신호 |
+| `ralph-loop-guard.sh` | Stop 훅 — 3단계 상태 머신 |
+| `ralph-loop-reject.sh` | "Oracle 거부" — 작업 재개 |
+| `ralph-loop-start.sh` | Ralph Loop 초기화 (jq 우선, grep 폴백) |
+| `ralph-loop-verified.sh` | "Oracle 승인" 신호 |
+| `read-briefings.sh` | 최근 N개 브리핑 읽기 |
+| `read-config.sh` | .omo/config.json에서 dot-notation 경로로 값 읽기 |
+| `release.sh` | 릴리스 자동화 (테스트→빌드→태그→push) |
+| `session-context-hook.sh` | SessionStart 훅 — 세션 시작 시 Boulder 태스크 컨텍스트 주입 |
+| `statusline.sh` | 셸 프롬프트 상태 표시줄 |
+| `subagent-stop-hook.sh` | SubagentStop 훅 — 진행 기록 및 oracle 에스컬레이션 권고 |
+| `task-completed-hook.sh` | TaskCompleted 훅 — 완료 알림 및 차단 해제 태스크 확인 |
+| `team-status.sh` | 현재 팀 상태 요약 출력 |
+| `teammate-idle-hook.sh` | TeammateIdle 훅 — 팀원 유휴 시 보류 태스크 확인 넛지 |
+| `validate-config.sh` | .omo/config.json 구조 및 필드값 검증 |
+| `write-briefing.sh` | 에이전트 브리핑 문서 작성 |
 
 ### 상태 파일 (실행 시 자동 생성)
 
@@ -88,7 +103,7 @@
    ├─ Actual need: 인증 흐름 수정하려고 시작점 찾는 중
    └─ Success: 파일 경로 + 흐름 설명
 
-2) 5개 전략 병렬 실행 (deepsearch 에이전트, sonnet)
+2) 5개 전략 병렬 실행 (deepsearch 에이전트, haiku)
    ├─ Symbol search: grep "auth" "middleware" 함수/클래스명
    ├─ Text search: grep "authenticate" "verify" "token"
    ├─ File pattern: glob "**/auth*" "**/middleware*"
@@ -594,7 +609,6 @@ Cycle 3:
 | **comment-check** | docs-keeper | X |
 | **mcp-doctor** | (단독) | X |
 | **setup-wizard** | (단독, 스크립트 호출) | X |
-| **self-test** | (단독, 스크립트 호출) | X |
 | **retro** | memory-keeper | X |
 | **perf-check** | perf-analyst | X |
 | **dep-audit** | (단독, 패키지 매니저 호출) | X |
@@ -670,34 +684,7 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 N: 플러그인 자가 검증 (self-test)
-
-```
-사용자: #st
-```
-
-```
-1) 구조 검증 → plugin.json, marketplace.json, 디렉토리 존재
-2) 버전 일관성 → plugin.json ↔ marketplace.json 비교
-3) 스킬 검증 → 23개 SKILL.md 프론트매터 필수 필드 + 이름 일치
-4) 에이전트 검증 → 20개 .md 프론트매터 + 유효 모델명
-5) 스크립트 검증 → 20개 .sh shebang + 실행 권한 + bash -n
-
-결과:
-   omo self-test results
-   =====================
-   Plugin version: 1.0.0
-   Structure:      PASS
-   Versions:       PASS
-   Skills (23):    PASS
-   Agents (20):    PASS
-   Scripts (20):   PASS
-   Overall: PASS
-```
-
----
-
-### 플로우 O: 회고 분석 (retro)
+### 플로우 N: 회고 분석 (retro)
 
 ```
 사용자: #re
@@ -731,7 +718,7 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 P: 성능 분석 (perf-check)
+### 플로우 O: 성능 분석 (perf-check)
 
 ```
 사용자: #pc
@@ -755,7 +742,7 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 Q: 의존성 감사 (dep-audit)
+### 플로우 P: 의존성 감사 (dep-audit)
 
 ```
 사용자: #da
@@ -775,7 +762,7 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 R: 마이그레이션 (migrate)
+### 플로우 Q: 마이그레이션 (migrate)
 
 ```
 사용자: #mg React 18에서 19로 업그레이드
@@ -802,7 +789,7 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 S: PR 리뷰 (pr-review)
+### 플로우 R: PR 리뷰 (pr-review)
 
 ```
 사용자: #pr 42
@@ -828,7 +815,7 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 T: 온보딩 가이드 (onboard)
+### 플로우 S: 온보딩 가이드 (onboard)
 
 ```
 사용자: #ob
@@ -850,7 +837,7 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 U: 도구 점검 (tool-check)
+### 플로우 T: 도구 점검 (tool-check)
 
 ```
 사용자: #tc

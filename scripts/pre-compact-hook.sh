@@ -26,10 +26,10 @@ if bash "${script_dir}/boulder-check.sh" >/dev/null 2>&1; then
     attempts=$(jq -r '.attempts' "${boulder_file}")
     max_attempts=$(jq -r '.max_attempts' "${boulder_file}")
   else
-    task_slug=$(grep -o '"task_slug":"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
-    goal=$(grep -o '"goal":"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
-    attempts=$(grep -o '"attempts":[0-9]*' "${boulder_file}" | cut -d: -f2)
-    max_attempts=$(grep -o '"max_attempts":[0-9]*' "${boulder_file}" | cut -d: -f2)
+    task_slug=$(grep -o '"task_slug" *: *"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
+    goal=$(grep -o '"goal" *: *"[^"]*"' "${boulder_file}" | cut -d'"' -f4)
+    attempts=$(grep -o '"attempts" *: *[0-9]*' "${boulder_file}" | grep -o '[0-9]*$')
+    max_attempts=$(grep -o '"max_attempts" *: *[0-9]*' "${boulder_file}" | grep -o '[0-9]*$')
   fi
   state_msg="Active boulder: ${task_slug} (attempt ${attempts}/${max_attempts}). Goal: ${goal}."
 fi

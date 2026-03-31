@@ -3,7 +3,7 @@ name: docs-sync
 description: "Check if README.md and user guide reflect current project state — philosophy, features, agent models, skill list. Fix any drift. Activate when #sync appears anywhere in the user message."
 argument-hint: "[scope-or-empty]"
 disable-model-invocation: false
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
+allowed-tools: Read, Edit, MultiEdit, Write, Glob, Grep, Bash, Task
 ---
 
 Sync documentation with current project state: $ARGUMENTS

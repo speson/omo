@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -201,8 +201,7 @@ run_ralph_tests() {
   echo ""
   echo "  [Custom promise]"
 
-  run_test "start with --promise=SHIP_IT" \
-    "bash '${repo_root}/scripts/ralph-loop-start.sh' 'promise test' --promise=SHIP_IT && grep -q 'SHIP_IT' .claude/state/ralph-loop.json"
+  # completion_promise removed in v1.9.0 — --promise flag no longer supported
   rm -f .claude/state/ralph-loop.json
 
   # --- Special characters in prompt ---
@@ -1114,8 +1113,8 @@ run_config_tests() {
   echo "  [read-config]"
 
   run_test_output "read-config: reads category model" \
-    "bash scripts/read-config.sh categories.fast-search.model sonnet" \
-    "sonnet"
+    "bash scripts/read-config.sh categories.fast-search.model haiku" \
+    "haiku"
 
   run_test_output "read-config: reads max_iterations" \
     "bash scripts/read-config.sh ralph-loop.max_iterations 100" \
@@ -1131,8 +1130,8 @@ run_config_tests() {
 
   # No config file → default
   run_test_output "read-config: no config → default" \
-    "cd '${cdir3}' && bash scripts/read-config.sh categories.fast-search.model sonnet" \
-    "sonnet"
+    "cd '${cdir3}' && bash scripts/read-config.sh categories.fast-search.model haiku" \
+    "haiku"
 
   cd "${cdir}"
 
@@ -1152,15 +1151,15 @@ maxTurns: 5
 You are a test agent.
 AGENTEOF
 
-  run_test_output "apply-config: --dry-run shows changes" \
+  run_test_output "apply-config: --dry-run shows no changes" \
     "bash scripts/apply-config.sh --dry-run" \
-    "sonnet"
+    "unchanged"
 
   run_test "apply-config: --dry-run does not modify files" \
     "grep -q '^model: haiku' agents/test-agent.md"
 
-  run_test "apply-config: apply changes model" \
-    "bash scripts/apply-config.sh && grep -q '^model: sonnet' agents/test-agent.md"
+  run_test "apply-config: apply keeps matching model" \
+    "bash scripts/apply-config.sh && grep -q '^model: haiku' agents/test-agent.md"
 
   echo ""
   echo "  [list-agents-by-category]"
@@ -1912,17 +1911,17 @@ BEOF
   run_test_fail "CLAUDE.md: no 2+ failed attempts for oracle" \
     "grep -q 'use after 2+ failed attempts' '${repo_root}/CLAUDE.md'"
 
-  run_test "CLAUDE.md: fast-search default is sonnet" \
-    "grep -q 'fast-search.*sonnet' '${repo_root}/CLAUDE.md'"
+  run_test "CLAUDE.md: fast-search default is haiku" \
+    "grep -q 'fast-search.*haiku' '${repo_root}/CLAUDE.md'"
 
   echo ""
   echo "  [fast-search default model]"
 
-  run_test "init-config: fast-search default is sonnet" \
-    "grep -q '\"fast-search\".*\"sonnet\"' '${repo_root}/scripts/init-config.sh'"
+  run_test "init-config: fast-search default is haiku" \
+    "grep -q '\"fast-search\".*\"haiku\"' '${repo_root}/scripts/init-config.sh'"
 
-  run_test "docs/config.md: fast-search default is sonnet" \
-    "grep -q 'fast-search.*sonnet' '${repo_root}/docs/config.md'"
+  run_test "docs/config.md: fast-search default is haiku" \
+    "grep -q 'fast-search.*haiku' '${repo_root}/docs/config.md'"
 
   echo ""
   echo "  [team-status.sh]"
@@ -2039,7 +2038,7 @@ run_nojq_tests() {
 RCEOF
 
   run_test_output "nojq: read-config fallback reads value" \
-    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/read-config.sh' categories.fast-search.model sonnet" \
+    "CLAUDE_PROJECT_DIR='${nojqdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/read-config.sh' categories.fast-search.model haiku" \
     "haiku"
 
   # No config file → default returned
@@ -2246,6 +2245,165 @@ EVEOF
 }
 
 # ═════════════════════════════════════════════════════════════════
+# SECTION 18: Hook script JSON output validation
+# ═════════════════════════════════════════════════════════════════
+run_hook_json_tests() {
+  echo "Hook script JSON output:"
+  echo "────────────────────────"
+
+  local hjdir="${tmpdir}/hookjson"
+  mkdir -p "${hjdir}/.claude/state/briefings"
+
+  # ── teammate-idle-hook (always produces JSON) ────────────────────
+  echo ""
+  echo "  [teammate-idle-hook: JSON output]"
+
+  run_test "teammate-idle-hook: jq path → valid JSON" \
+    "echo '{}' | bash '${repo_root}/scripts/teammate-idle-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "teammate-idle-hook: has hookSpecificOutput key" \
+    "echo '{}' | bash '${repo_root}/scripts/teammate-idle-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "teammate-idle-hook: hookEventName is TeammateIdle" \
+    "echo '{}' | bash '${repo_root}/scripts/teammate-idle-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"TeammateIdle\"'"
+
+  run_test "teammate-idle-hook: has additionalContext key" \
+    "echo '{}' | bash '${repo_root}/scripts/teammate-idle-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"additionalContext\" in d[\"hookSpecificOutput\"]'"
+
+  # ── task-completed-hook (always produces JSON) ───────────────────
+  echo ""
+  echo "  [task-completed-hook: JSON output]"
+
+  run_test "task-completed-hook: jq path → valid JSON" \
+    "echo '{}' | bash '${repo_root}/scripts/task-completed-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "task-completed-hook: has hookSpecificOutput key" \
+    "echo '{}' | bash '${repo_root}/scripts/task-completed-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "task-completed-hook: hookEventName is TaskCompleted" \
+    "echo '{}' | bash '${repo_root}/scripts/task-completed-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"TaskCompleted\"'"
+
+  run_test "task-completed-hook: has additionalContext key" \
+    "echo '{}' | bash '${repo_root}/scripts/task-completed-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"additionalContext\" in d[\"hookSpecificOutput\"]'"
+
+  # ── session-context-hook (produces JSON when boulder is active) ──
+  echo ""
+  echo "  [session-context-hook: JSON output with active boulder]"
+
+  CLAUDE_PROJECT_DIR="${hjdir}" bash "${repo_root}/scripts/boulder-init.sh" "hookjson test task" >/dev/null 2>&1
+
+  run_test "session-context-hook: active boulder → valid JSON" \
+    "echo '{\"source\":\"resume\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/session-context-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "session-context-hook: has hookSpecificOutput key" \
+    "echo '{\"source\":\"resume\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/session-context-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "session-context-hook: hookEventName is SessionStart" \
+    "echo '{\"source\":\"startup\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/session-context-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"SessionStart\"'"
+
+  run_test "session-context-hook: has additionalContext key" \
+    "echo '{\"source\":\"resume\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/session-context-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"additionalContext\" in d[\"hookSpecificOutput\"]'"
+
+  # ── idle-resume-hook (produces JSON when boulder active + idle_prompt) ──
+  echo ""
+  echo "  [idle-resume-hook: JSON output with active boulder]"
+
+  run_test "idle-resume-hook: idle_prompt + boulder → valid JSON" \
+    "echo '{\"notification_type\":\"idle_prompt\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/idle-resume-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "idle-resume-hook: has hookSpecificOutput key" \
+    "echo '{\"notification_type\":\"idle_prompt\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/idle-resume-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "idle-resume-hook: hookEventName is Notification" \
+    "echo '{\"notification_type\":\"idle_prompt\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/idle-resume-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"Notification\"'"
+
+  run_test "idle-resume-hook: has additionalContext key" \
+    "echo '{\"notification_type\":\"idle_prompt\"}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/idle-resume-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"additionalContext\" in d[\"hookSpecificOutput\"]'"
+
+  # ── pre-compact-hook (produces JSON when boulder active) ─────────
+  echo ""
+  echo "  [pre-compact-hook: JSON output with active boulder]"
+
+  run_test "pre-compact-hook: active boulder → valid JSON" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/pre-compact-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "pre-compact-hook: has hookSpecificOutput key" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/pre-compact-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "pre-compact-hook: hookEventName is PreCompact" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/pre-compact-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"PreCompact\"'"
+
+  run_test "pre-compact-hook: has systemMessage key" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/pre-compact-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"systemMessage\" in d[\"hookSpecificOutput\"]'"
+
+  # ── subagent-stop-hook (produces JSON only when escalation triggered) ──
+  echo ""
+  echo "  [subagent-stop-hook: JSON output when escalation recommended]"
+
+  # Seed a briefing that signals LOW confidence so escalation-check exits 2
+  cat > "${hjdir}/.claude/state/briefings/test-agent-briefing.md" <<'BEOF'
+# Agent Briefing
+
+- Confidence: LOW
+- Escalation: recommended
+BEOF
+
+  run_test "subagent-stop-hook: escalation recommended → valid JSON" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/subagent-stop-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "subagent-stop-hook: has hookSpecificOutput key" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/subagent-stop-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "subagent-stop-hook: hookEventName is SubagentStop" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/subagent-stop-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"SubagentStop\"'"
+
+  run_test "subagent-stop-hook: has additionalContext key" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' bash '${repo_root}/scripts/subagent-stop-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"additionalContext\" in d[\"hookSpecificOutput\"]'"
+
+  # ── No-jq fallback paths for unconditional JSON hooks ────────────
+  echo ""
+  echo "  [no-jq fallback: JSON structure]"
+
+  local ORIG_PATH="${PATH}"
+  local jq_real
+  jq_real=$(command -v jq 2>/dev/null || true)
+  local NOJQ_PATH="${PATH}"
+  if [ -n "${jq_real}" ]; then
+    local jq_dir
+    jq_dir=$(dirname "${jq_real}")
+    NOJQ_PATH=$(printf '%s' "${PATH}" | tr ':' '\n' | grep -v "^${jq_dir}$" | tr '\n' ':' | sed 's/:$//')
+  fi
+
+  run_test "nojq: teammate-idle-hook fallback → valid JSON" \
+    "echo '{}' | PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/teammate-idle-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "nojq: teammate-idle-hook fallback → has hookSpecificOutput" \
+    "echo '{}' | PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/teammate-idle-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "nojq: task-completed-hook fallback → valid JSON" \
+    "echo '{}' | PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/task-completed-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "nojq: task-completed-hook fallback → has hookSpecificOutput" \
+    "echo '{}' | PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/task-completed-hook.sh' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert \"hookSpecificOutput\" in d'"
+
+  run_test "nojq: session-context-hook fallback → valid JSON" \
+    "echo '{\"source\":\"resume\"}' | CLAUDE_PROJECT_DIR='${hjdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/session-context-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "nojq: idle-resume-hook fallback → valid JSON" \
+    "echo '{\"notification_type\":\"idle_prompt\"}' | CLAUDE_PROJECT_DIR='${hjdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/idle-resume-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "nojq: pre-compact-hook fallback → valid JSON" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/pre-compact-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  run_test "nojq: subagent-stop-hook fallback → valid JSON" \
+    "echo '{}' | CLAUDE_PROJECT_DIR='${hjdir}' PATH='${NOJQ_PATH}' bash '${repo_root}/scripts/subagent-stop-hook.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
+
+  export PATH="${ORIG_PATH}"
+
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -2266,6 +2424,7 @@ case "${section}" in
   sprint6)     run_sprint6_tests ;;
   nojq)        run_nojq_tests ;;
   evolve)      run_evolve_tests ;;
+  hookjson)    run_hook_json_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -2284,10 +2443,11 @@ case "${section}" in
     run_sprint6_tests
     run_nojq_tests
     run_evolve_tests
+    run_hook_json_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, evolve, hookjson, all"
     exit 1
     ;;
 esac

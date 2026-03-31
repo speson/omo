@@ -32,7 +32,7 @@ The `.omo/` directory is separate from `.claude/state/` which holds runtime stat
 {
   "version": "1",
   "categories": {
-    "fast-search":    { "model": "sonnet" },
+    "fast-search":    { "model": "haiku" },
     "verification":   { "model": "sonnet" },
     "implementation": { "model": "sonnet" },
     "planning":       { "model": "sonnet" },
@@ -77,7 +77,7 @@ Maps agent categories to models. Each agent belongs to exactly one category. Cha
 
 | Category | Default Model | Agents |
 |---|---|---|
-| `fast-search` | sonnet | repo-librarian, deepsearch, memory-keeper |
+| `fast-search` | haiku | repo-librarian, deepsearch, memory-keeper |
 | `verification` | sonnet | test-commander, security-auditor, perf-analyst |
 | `implementation` | sonnet | build-integrator, test-generator, migration-specialist, docs-keeper |
 | `planning` | sonnet | planner-sisyphus, atlas, critic-lite, oracle-lite |
@@ -142,7 +142,7 @@ Array of skill names to disable. Example: `["retro", "dep-audit"]`.
 Read a single config value with dot-notation path and optional default.
 
 ```bash
-bash scripts/read-config.sh categories.fast-search.model sonnet
+bash scripts/read-config.sh categories.fast-search.model haiku
 bash scripts/read-config.sh ralph-loop.max_iterations 100
 bash scripts/read-config.sh spawn.max_concurrent_agents 5
 ```

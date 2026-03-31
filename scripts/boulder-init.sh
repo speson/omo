@@ -94,7 +94,7 @@ if command -v jq >/dev/null 2>&1; then
     }' > "${boulder_file}"
 else
   # JSON-escape the goal
-  escaped_goal=$(printf '%s' "${goal}" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g')
+  escaped_goal=$(printf '%s' "${goal}" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g' | tr '\n' ' ')
   cat > "${boulder_file}" <<BEOF
 {
   "active": true,

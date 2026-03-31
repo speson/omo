@@ -3,7 +3,7 @@ name: release
 description: "Full release pipeline — commit, push, tag, GitHub release, marketplace version sync. Activate when #rel appears anywhere in the user message."
 argument-hint: "<version>"
 disable-model-invocation: false
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 ---
 
 Execute a full release for version: $ARGUMENTS

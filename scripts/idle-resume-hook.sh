@@ -28,9 +28,8 @@ fi
 
 boulder_file="${project_dir}/.claude/state/boulder.json"
 
-# JSON field readers
-json_str() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *\"[^\"]*\"" "$2" | cut -d'"' -f4; fi; }
-json_raw() { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *[a-z0-9]*" "$2" | sed 's/.*: *//'; fi; }
+# shellcheck source=json-helpers.sh
+source "$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)/json-helpers.sh"
 
 auto_resume=$(json_raw auto_resume "${boulder_file}")
 if [ "${auto_resume}" != "true" ]; then

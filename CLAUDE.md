@@ -78,7 +78,7 @@ Agent categories
 
 | Category | Default Model | Agents |
 |---|---|---|
-| `fast-search` | sonnet | repo-librarian, deepsearch, memory-keeper |
+| `fast-search` | haiku | repo-librarian, deepsearch, memory-keeper |
 | `verification` | sonnet | test-commander, security-auditor, perf-analyst |
 | `implementation` | sonnet | build-integrator, test-generator, migration-specialist, docs-keeper |
 | `planning` | sonnet | planner-sisyphus, atlas, critic-lite, oracle-lite |

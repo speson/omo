@@ -4,8 +4,8 @@ set -eu
 
 STATE_FILE=".claude/state/ralph-loop.json"
 
-# JSON field reader: prefers jq, falls back to grep+cut
-json_raw()  { if command -v jq >/dev/null 2>&1; then jq -r ".$1" "$2"; else grep -o "\"$1\" *: *[a-z0-9]*" "$2" | sed 's/.*: *//'; fi; }
+# shellcheck source=json-helpers.sh
+source "$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)/json-helpers.sh"
 
 if [ ! -f "${STATE_FILE}" ]; then
   echo "No active Ralph Loop."
