@@ -128,7 +128,7 @@ Boulder tracks task state across sessions. When a task is initialized with `boul
 | `boulder-complete.sh` | Mark task as completed |
 | `boulder-status.sh` | Show human-readable status |
 
-Boulder is integrated into `#rl`, `#rw`, and `#ho` skills. Configure via `.omo/config.json` boulder section. See `docs/config.md`.
+Boulder is integrated into `#ulw`, `#rl`, `#rw`, and `#ho` skills. Configure via `.omo/config.json` boulder section. See `docs/config.md`.
 
 Agent Teams
 

@@ -1,0 +1,46 @@
+{
+  "version": "1",
+  "mode": "standard",
+  "categories": {
+    "fast-search": {
+      "model": "haiku"
+    },
+    "verification": {
+      "model": "sonnet"
+    },
+    "implementation": {
+      "model": "sonnet"
+    },
+    "planning": {
+      "model": "sonnet"
+    },
+    "deep-reasoning": {
+      "model": "opus"
+    },
+    "research": {
+      "model": "sonnet"
+    },
+    "media": {
+      "model": "sonnet"
+    }
+  },
+  "ralph-loop": {
+    "max_iterations": 100,
+    "oracle_default": false
+  },
+  "spawn": {
+    "max_concurrent_agents": 5
+  },
+  "boulder": {
+    "enabled": true,
+    "max_attempts": 5,
+    "auto_resume": true
+  },
+  "teams": {
+    "enabled": true,
+    "max_teammates": 8,
+    "auto_escalation": true,
+    "notify_on_completion": true
+  },
+  "disabled_skills": []
+}

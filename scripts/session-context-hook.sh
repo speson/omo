@@ -52,6 +52,24 @@ fi
 
 context="${context}\nRun #rw to resume or #ho to review handoff."
 
+# Check for active Ralph Loop state
+ralph_loop_file="${project_dir}/.claude/state/ralph-loop.json"
+if [ -f "${ralph_loop_file}" ]; then
+  rl_active=$(json_raw active "${ralph_loop_file}")
+  if [ "${rl_active}" = "true" ]; then
+    rl_phase=$(json_str phase "${ralph_loop_file}")
+    rl_iteration=$(json_raw iteration "${ralph_loop_file}")
+    rl_max=$(json_raw max_iterations "${ralph_loop_file}")
+    rl_prompt=$(json_str prompt "${ralph_loop_file}")
+    rl_oracle=$(json_raw oracle_verify "${ralph_loop_file}")
+    context="${context}\nRalph Loop active: phase=${rl_phase}, iteration=${rl_iteration}/${rl_max}"
+    context="${context}\nOriginal prompt: ${rl_prompt}"
+    if [ "${rl_oracle}" = "true" ]; then
+      context="${context}\nOracle verification required"
+    fi
+  fi
+fi
+
 # Output JSON
 if command -v jq >/dev/null 2>&1; then
   jq -n \

@@ -2,7 +2,7 @@
 # omo comprehensive backtest suite
 # Tests all scripts with diverse input variations and edge cases
 # Usage: ./tests/backtest.sh [section]
-# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, hookjson, security, v12, all
+# Sections: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, hookjson, security, v12, scripts, all
 set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -2572,6 +2572,91 @@ BEOF
 }
 
 # ═════════════════════════════════════════════════════════════════
+# Section 21: script coverage — classify-diff, read-mode, CLAUDE.md x-ref
+# ═════════════════════════════════════════════════════════════════
+run_script_coverage_tests() {
+  echo ""
+  echo "Section 21: script coverage"
+  echo "──────────────────────────"
+
+  echo ""
+  echo "  [classify-diff.sh]"
+
+  run_test "classify-diff: script exists and is executable" \
+    "test -x '${repo_root}/scripts/classify-diff.sh'"
+
+  run_test "classify-diff: bash -n syntax check passes" \
+    "bash -n '${repo_root}/scripts/classify-diff.sh'"
+
+  run_test "classify-diff: first output line is small, medium, or large" \
+    "cd '${repo_root}' && bash '${repo_root}/scripts/classify-diff.sh' | head -1 | grep -E '^(small|medium|large)$'"
+
+  run_test "classify-diff: second output line is a number" \
+    "cd '${repo_root}' && bash '${repo_root}/scripts/classify-diff.sh' | sed -n '2p' | grep -qE '^[0-9]+$'"
+
+  echo ""
+  echo "  [read-mode.sh]"
+
+  run_test "read-mode: script exists and is executable" \
+    "test -x '${repo_root}/scripts/read-mode.sh'"
+
+  run_test "read-mode: bash -n syntax check passes" \
+    "bash -n '${repo_root}/scripts/read-mode.sh'"
+
+  local rmode_dir="${tmpdir}/read-mode"
+  mkdir -p "${rmode_dir}"
+
+  run_test_output "read-mode: no config file returns standard" \
+    "CLAUDE_PROJECT_DIR='${rmode_dir}' bash '${repo_root}/scripts/read-mode.sh'" \
+    "standard"
+
+  local rmode_lean="${tmpdir}/read-mode-lean"
+  mkdir -p "${rmode_lean}/.omo"
+  printf '{"mode":"lean"}\n' > "${rmode_lean}/.omo/config.json"
+
+  run_test_output "read-mode: mode lean returns lean" \
+    "CLAUDE_PROJECT_DIR='${rmode_lean}' bash '${repo_root}/scripts/read-mode.sh'" \
+    "lean"
+
+  local rmode_thorough="${tmpdir}/read-mode-thorough"
+  mkdir -p "${rmode_thorough}/.omo"
+  printf '{"mode":"thorough"}\n' > "${rmode_thorough}/.omo/config.json"
+
+  run_test_output "read-mode: mode thorough returns thorough" \
+    "CLAUDE_PROJECT_DIR='${rmode_thorough}' bash '${repo_root}/scripts/read-mode.sh'" \
+    "thorough"
+
+  local rmode_invalid="${tmpdir}/read-mode-invalid"
+  mkdir -p "${rmode_invalid}/.omo"
+  printf '{"mode":"turbo"}\n' > "${rmode_invalid}/.omo/config.json"
+
+  run_test_output "read-mode: invalid mode value falls back to standard" \
+    "CLAUDE_PROJECT_DIR='${rmode_invalid}' bash '${repo_root}/scripts/read-mode.sh'" \
+    "standard"
+
+  echo ""
+  echo "  [CLAUDE.md shortcut-to-skill cross-validation]"
+
+  # Parse each shortcut table row and verify the skill directory exists.
+  # Table rows look like: | `#xx` | `/omo:skill-name ...` | description |
+  while IFS= read -r line; do
+    # Extract skill command: text between /omo: and the next space or <
+    local skill_cmd
+    skill_cmd=$(printf '%s\n' "${line}" | sed "s/.*\/omo:\([a-z0-9-]*\).*/\1/")
+    if [ -z "${skill_cmd}" ]; then
+      continue
+    fi
+    # Extract shortcut for test label
+    local shortcut
+    shortcut=$(printf '%s\n' "${line}" | sed "s/.*\`\(#[a-z]*\)\`.*/\1/")
+    run_test "CLAUDE.md: ${shortcut} -> skills/${skill_cmd}/SKILL.md exists" \
+      "test -f '${repo_root}/skills/${skill_cmd}/SKILL.md'"
+  done < <(grep -E "^\| \`#[a-z]" "${repo_root}/CLAUDE.md")
+
+  echo ""
+}
+
+# ═════════════════════════════════════════════════════════════════
 # Run requested sections
 # ═════════════════════════════════════════════════════════════════
 case "${section}" in
@@ -2594,6 +2679,7 @@ case "${section}" in
   hookjson)    run_hook_json_tests ;;
   security)    run_security_tests ;;
   v12)         run_v12_tests ;;
+  scripts)     run_script_coverage_tests ;;
   all)
     run_ralph_tests
     run_briefing_tests
@@ -2614,10 +2700,11 @@ case "${section}" in
     run_hook_json_tests
     run_security_tests
     run_v12_tests
+    run_script_coverage_tests
     ;;
   *)
     echo "Unknown section: ${section}"
-    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, hookjson, security, v12, all"
+    echo "Available: ralph, briefing, hooks, tasks, version, schema, marketplace, misc, quality, templates, config, boulder, hookscripts, teamhooks, sprint6, nojq, hookjson, security, v12, scripts, all"
     exit 1
     ;;
 esac
