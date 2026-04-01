@@ -31,6 +31,7 @@ fi
 if command -v jq >/dev/null 2>&1; then
   jq -n '{
     "version": "1",
+    "mode": "standard",
     "categories": {
       "fast-search":    { "model": "haiku" },
       "verification":   { "model": "sonnet" },
@@ -58,17 +59,13 @@ if command -v jq >/dev/null 2>&1; then
       "auto_escalation": true,
       "notify_on_completion": true
     },
-    "evolve": {
-      "max_discovery_agents": 6,
-      "auto_plan": true,
-      "include_memory": true
-    },
     "disabled_skills": []
   }' > "${config_file}"
 else
   cat > "${config_file}" <<'EOF'
 {
   "version": "1",
+  "mode": "standard",
   "categories": {
     "fast-search":    { "model": "haiku" },
     "verification":   { "model": "sonnet" },
@@ -95,11 +92,6 @@ else
     "max_teammates": 8,
     "auto_escalation": true,
     "notify_on_completion": true
-  },
-  "evolve": {
-    "max_discovery_agents": 6,
-    "auto_plan": true,
-    "include_memory": true
   },
   "disabled_skills": []
 }

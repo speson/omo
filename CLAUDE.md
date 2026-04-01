@@ -47,8 +47,6 @@ All skills support auto-intercept via `#shortcut` patterns. Type `#ulw auth 구�
 | `#ds` | `/omo:deep-search <query>` | Multi-strategy parallel codebase search |
 | `#sp` | `/omo:spawn <goal>` | Dispatch multiple agents in parallel |
 | `#ho` | `/omo:handoff [next-step]` | Handoff note when stopping mid-task |
-| `#cc` | `/omo:comment-check [scope]` | Audit comments, docs, and prompts |
-| `#mcp` | `/omo:mcp-doctor` | Diagnose MCP availability |
 | `#sw` | `/omo:setup-wizard [--full]` | Auto-detect and configure omo prerequisites |
 | `#st` | `/omo:self-test` | Plugin structure and version integrity check |
 | `#re` | `/omo:retro` | Post-session retrospective analysis |
@@ -56,14 +54,8 @@ All skills support auto-intercept via `#shortcut` patterns. Type `#ulw auth 구�
 | `#da` | `/omo:dep-audit [scope]` | Dependency security audit |
 | `#mg` | `/omo:migrate <target>` | Framework/API/language migration orchestration |
 | `#pr` | `/omo:pr-review [pr-number]` | Comprehensive GitHub PR review |
-| `#ob` | `/omo:onboard [focus]` | Project onboarding guide generation |
-| `#tc` | `/omo:tool-check` | External tool dependency verification |
-| `#va` | `/omo:verify-all [scope]` | Composite verification (ship-check + diff-review in parallel) |
 | `#rel` | `/omo:release <version>` | Full release pipeline (commit, push, tag, release, marketplace) |
 | `#sync` | `/omo:docs-sync [scope]` | Sync README and user guide with current project state |
-| `#ev` | `/omo:evolve [focus]` | Automated self-improvement pipeline (6-agent analysis → sprint plan) |
-| `#uwl` | `/omo:ultrawork-loop [goal]` | Ultrawork with ralph-loop enforcement — does not stop until done |
-| `#dh` | `/omo:deep-hunt <symptom>` | Parallel bug-hunt + deepsearch investigation |
 | `#ss` | `/omo:status` | Unified omo status dashboard |
 
 Configuration
@@ -83,10 +75,10 @@ Agent categories
 |---|---|---|
 | `fast-search` | haiku | repo-librarian, deepsearch, memory-keeper |
 | `verification` | sonnet | test-commander, security-auditor, perf-analyst |
-| `implementation` | sonnet | build-integrator, test-generator, migration-specialist, docs-keeper |
-| `planning` | sonnet | planner-sisyphus, atlas, critic-lite, oracle-lite |
+| `implementation` | sonnet | build-integrator, migration-specialist, docs-keeper |
+| `planning` | sonnet | planner-sisyphus, atlas |
 | `deep-reasoning` | opus | oracle, critic, build-integrator-heavy |
-| `research` | sonnet | repo-librarian-deep, bug-hunter |
+| `research` | sonnet | bug-hunter |
 | `media` | sonnet | vision |
 
 Preferred specialists
@@ -105,12 +97,8 @@ Preferred specialists
 - `perf-analyst` for performance impact analysis
 - `memory-keeper` for cross-session memory management
 - `security-auditor` for OWASP Top 10 and secret detection
-- `test-generator` for edge-case test generation from diffs
 - `migration-specialist` for pattern-based bulk transformations
-- `critic-lite` for lightweight plan review (simple plans)
-- `oracle-lite` for quick first-pass technical advice
 - `build-integrator-heavy` for complex changes (after build-integrator failure)
-- `repo-librarian-deep` for deep feature tracing
 
 Hooks
 
@@ -140,7 +128,7 @@ Boulder tracks task state across sessions. When a task is initialized with `boul
 | `boulder-complete.sh` | Mark task as completed |
 | `boulder-status.sh` | Show human-readable status |
 
-Boulder is integrated into `#ulw`, `#rl`, `#rw`, and `#ho` skills. Configure via `.omo/config.json` boulder section. See `docs/config.md`.
+Boulder is integrated into `#rl`, `#rw`, and `#ho` skills. Configure via `.omo/config.json` boulder section. See `docs/config.md`.
 
 Agent Teams
 
@@ -163,7 +151,6 @@ Repo-local state created by the plugin
 - Briefings: `.claude/state/briefings/`
 - Cross-session memory: `.claude/state/memory/` (conventions, decisions, failures)
 - Boulder state: `.claude/state/boulder.json`
-- Improvement reports: `.claude/state/improvements/`
 
 Operating rules
 

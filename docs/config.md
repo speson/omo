@@ -31,6 +31,7 @@ The `.omo/` directory is separate from `.claude/state/` which holds runtime stat
 ```json
 {
   "version": "1",
+  "mode": "standard",
   "categories": {
     "fast-search":    { "model": "haiku" },
     "verification":   { "model": "sonnet" },
@@ -58,11 +59,6 @@ The `.omo/` directory is separate from `.claude/state/` which holds runtime stat
     "auto_escalation": true,
     "notify_on_completion": true
   },
-  "evolve": {
-    "max_discovery_agents": 6,
-    "auto_plan": true,
-    "include_memory": true
-  },
   "disabled_skills": []
 }
 ```
@@ -70,6 +66,18 @@ The `.omo/` directory is separate from `.claude/state/` which holds runtime stat
 ### version
 
 Schema version. Currently `"1"`.
+
+### mode
+
+Controls how much agent overhead omo applies during reviews and plan execution.
+
+| Value | Description |
+|---|---|
+| `lean` | Skip oracle dispatch in diff-review for small diffs. Use sonnet for plan review instead of opus critic for plans under 5 steps. Run ship-check OR diff-review, not both. Best for routine changes. |
+| `standard` | Full agent dispatch as designed. Recommended for most work. |
+| `thorough` | Everything in standard plus: always dispatch oracle in diff-review, always use opus critic, run ship-check AND diff-review together. Best for critical changes. |
+
+Default: `"standard"`.
 
 ### categories
 
@@ -79,10 +87,10 @@ Maps agent categories to models. Each agent belongs to exactly one category. Cha
 |---|---|---|
 | `fast-search` | haiku | repo-librarian, deepsearch, memory-keeper |
 | `verification` | sonnet | test-commander, security-auditor, perf-analyst |
-| `implementation` | sonnet | build-integrator, test-generator, migration-specialist, docs-keeper |
-| `planning` | sonnet | planner-sisyphus, atlas, critic-lite, oracle-lite |
+| `implementation` | sonnet | build-integrator, migration-specialist, docs-keeper |
+| `planning` | sonnet | planner-sisyphus, atlas |
 | `deep-reasoning` | opus | oracle, critic, build-integrator-heavy |
-| `research` | sonnet | repo-librarian-deep, bug-hunter |
+| `research` | sonnet | bug-hunter |
 | `media` | sonnet | vision |
 
 Valid models: `haiku`, `sonnet`, `opus`.
@@ -121,21 +129,40 @@ Boulder provides cross-session task persistence. When enabled, tasks initialized
 
 Teams enables multi-agent coordination via Claude Code's TeamCreate/SendMessage API. When enabled, Atlas and Spawn skills use persistent teams with shared task lists instead of fire-and-forget subagents.
 
-### evolve
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `max_discovery_agents` | integer | 6 | Parallel discovery agents (1-6) |
-| `auto_plan` | boolean | true | Auto-generate sprint plan after synthesis |
-| `include_memory` | boolean | true | Include memory-keeper in discovery phase |
-
-The evolve skill (`#ev`) runs an automated self-improvement pipeline that collects project metrics, dispatches up to 6 analysis agents in parallel, synthesizes findings into an IMPACT x EFFORT matrix, generates a validated sprint plan, and saves the report to `.claude/state/improvements/`.
-
 ### disabled_skills
 
 Array of skill names to disable. Example: `["retro", "dep-audit"]`.
 
 ## Scripts
+
+### read-mode.sh
+
+Read the current execution mode. Returns `lean`, `standard`, or `thorough`. Defaults to `standard` when config is absent or the field is missing.
+
+```bash
+mode=$(bash scripts/read-mode.sh)
+```
+
+### classify-diff.sh
+
+Classify the current git diff by size. Outputs the size class on line 1 and the raw line count on line 2.
+
+```bash
+bash scripts/classify-diff.sh          # Classify staged changes (falls back to HEAD)
+bash scripts/classify-diff.sh HEAD~3   # Classify last 3 commits
+```
+
+Example output:
+```
+medium
+47
+```
+
+| Class | Threshold |
+|---|---|
+| `small` | < 20 lines changed |
+| `medium` | 20–200 lines changed |
+| `large` | > 200 lines changed |
 
 ### read-config.sh
 

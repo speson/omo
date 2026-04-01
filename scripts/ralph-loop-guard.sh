@@ -35,12 +35,14 @@ iteration=$(json_raw iteration "${STATE_FILE}")
 max_iterations=$(json_raw max_iterations "${STATE_FILE}")
 prompt=$(json_str prompt "${STATE_FILE}")
 oracle_verify=$(json_raw oracle_verify "${STATE_FILE}")
+stagnation_count=$(json_raw stagnation_count "${STATE_FILE}")
 
 # Defaults
 : "${phase:=working}"
 : "${iteration:=0}"
-: "${max_iterations:=100}"
+: "${max_iterations:=20}"
 : "${oracle_verify:=false}"
+: "${stagnation_count:=0}"
 
 # ─── Phase: verified ──────────────────────────────────────────────
 # Task is complete (and Oracle verified if required). Allow stop.
@@ -62,11 +64,37 @@ fi
 
 # Increment iteration
 new_iteration=$((iteration + 1))
+
+# Stagnation detection: check whether any repo files changed since last marker
+MARKER_FILE="${STATE_DIR}/ralph-loop-last-change"
+repo_root=$(CDPATH='' cd -- "$(dirname -- "${STATE_DIR}")" && cd .. && pwd)
+if [ -f "${MARKER_FILE}" ]; then
+  changed_files=$(find "${repo_root}" -newer "${MARKER_FILE}" \
+    -not -path "${repo_root}/.git/*" \
+    -not -path "${repo_root}/.claude/*" \
+    -type f 2>/dev/null | head -1)
+else
+  changed_files="init"
+fi
+
+if [ -n "${changed_files}" ]; then
+  # Changes detected (or first run): reset stagnation counter and update marker
+  new_stagnation=0
+  touch "${MARKER_FILE}"
+else
+  # No changes: increment stagnation counter
+  new_stagnation=$((stagnation_count + 1))
+fi
+
 tmp_file="${STATE_FILE}.tmp"
 if command -v jq >/dev/null 2>&1; then
-  jq --argjson i "${new_iteration}" '.iteration = $i' "${STATE_FILE}" > "${tmp_file}"
+  jq --argjson i "${new_iteration}" --argjson s "${new_stagnation}" \
+    '.iteration = $i | .stagnation_count = $s' "${STATE_FILE}" > "${tmp_file}"
 else
-  sed "s/\"iteration\"[[:space:]]*:[[:space:]]*${iteration}\([^0-9]\)/\"iteration\":${new_iteration}\1/" "${STATE_FILE}" > "${tmp_file}"
+  sed \
+    -e "s/\"iteration\"[[:space:]]*:[[:space:]]*${iteration}\([^0-9]\)/\"iteration\":${new_iteration}\1/" \
+    -e "s/\"stagnation_count\"[[:space:]]*:[[:space:]]*${stagnation_count}\([^0-9]\)/\"stagnation_count\":${new_stagnation}\1/" \
+    "${STATE_FILE}" > "${tmp_file}"
 fi
 mv "${tmp_file}" "${STATE_FILE}"
 
@@ -99,13 +127,24 @@ fi
 
 # ─── Phase: working ───────────────────────────────────────────────
 # Task is not yet complete. Block stop and inject continuation.
+
+# Build stagnation warning (injected when 3+ consecutive no-change iterations)
+stagnation_warning=""
+if [ "${new_stagnation}" -ge 3 ]; then
+  stagnation_warning="
+WARNING: No file changes detected for ${new_stagnation} iterations. Consider:
+  (a) escalating to oracle,
+  (b) cancelling with ralph-loop-cancel.sh,
+  (c) breaking the problem down differently."
+fi
+
 if [ "${oracle_verify}" = "true" ]; then
   # ULW-loop mode: agent must run ralph-loop-done.sh when it believes task is complete
   cat <<EOF
 [RALPH LOOP (ULW) — Iteration ${new_iteration}/${max_iterations}]
 
 The task is NOT complete yet. Continue working.
-
+${stagnation_warning}
 REQUIRED:
 - Review your progress so far (check todo list)
 - Continue from where you left off
@@ -124,7 +163,7 @@ else
 [RALPH LOOP — Iteration ${new_iteration}/${max_iterations}]
 
 The task is NOT complete yet. Continue working.
-
+${stagnation_warning}
 REQUIRED:
 - Review your progress so far (check todo list)
 - Continue from where you left off

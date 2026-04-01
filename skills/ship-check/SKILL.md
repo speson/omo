@@ -19,7 +19,7 @@ Perform a final check for: $ARGUMENTS
    - placeholder text
    - stale comments or docs
    - missing tests or verification
-5. Recommend `comment-check` or `docs-keeper` if the diff is prose-heavy.
+5. Recommend `docs-keeper` if the diff is prose-heavy.
 6. Summarize:
    - verification run
    - not run

@@ -557,25 +557,20 @@ Cycle 3:
    ┌────v────┐  ┌──v──────────────┐
    │ critic  │  │build-integrator-│ <- 에스컬레이션
    │ (opus)  │  │heavy (opus)     │
-   └────┬────┘  └─────────────────┘
-        │ 간단한 플랜
-   ┌────v──────┐
-   │critic-lite│ <- 4단계 이하 플랜 경량 검증
-   │ (sonnet)  │
-   └───────────┘
+   └─────────┘  └─────────────────┘
 
-   ┌─────────┐     ┌────────────┐
-   │ oracle  │ <── │oracle-lite │ <- 첫 시도 빠른 분석
-   │ (opus)  │     │ (sonnet)   │    LOW confidence시 에스컬레이션
-   └─────────┘     └────────────┘
+   ┌─────────┐
+   │ oracle  │
+   │ (opus)  │
+   └─────────┘
    아키텍처 자문 + Ralph Loop 검증
 
-   ┌──────────┐  ┌────────┐  ┌───────────┐  ┌──────────────┐
-   │deepsearch│  │ vision │  │   repo-   │  │repo-librarian│
-   │ (haiku)  │  │(sonnet)│  │ librarian │  │  -deep       │
-   └──────────┘  └────────┘  │  (haiku)  │  │  (sonnet)    │
-   다전략 검색    이미지 분석   └───────────┘  └──────────────┘
-                              레포 탐색       심화 기능 추적
+   ┌──────────┐  ┌────────┐  ┌───────────┐
+   │deepsearch│  │ vision │  │   repo-   │
+   │ (haiku)  │  │(sonnet)│  │ librarian │
+   └──────────┘  └────────┘  │  (haiku)  │
+   다전략 검색    이미지 분석   └───────────┘
+                              레포 탐색
 
    ┌──────────────┐  ┌──────────┐  ┌────────────────┐
    │perf-analyst  │  │security- │  │migration-      │
@@ -584,12 +579,12 @@ Cycle 3:
    성능 분석          └──────────┘  └────────────────┘
                      보안 감사       마이그레이션 실행
 
-   ┌──────────────┐  ┌──────────┐
-   │test-generator│  │memory-   │
-   │  (sonnet)    │  │keeper    │
-   └──────────────┘  │(haiku)   │
-   테스트 자동 생성    └──────────┘
-                     메모리 관리
+   ┌──────────┐
+   │memory-   │
+   │keeper    │
+   │(haiku)   │
+   └──────────┘
+   메모리 관리
 ```
 
 ---
@@ -610,23 +605,15 @@ Cycle 3:
 | **repo-radar** | repo-librarian, deepsearch, Explore | X |
 | **ship-check** | test-commander, docs-keeper | X |
 | **handoff** | (단독) | X |
-| **comment-check** | docs-keeper | X |
-| **mcp-doctor** | (단독) | X |
 | **setup-wizard** | (단독, 스크립트 호출) | X |
 | **retro** | memory-keeper | X |
 | **perf-check** | perf-analyst | X |
 | **dep-audit** | (단독, 패키지 매니저 호출) | X |
 | **migrate** | migration-specialist, planner-sisyphus, critic, build-integrator, bug-hunter | X |
 | **pr-review** | security-auditor, test-commander | X |
-| **onboard** | repo-librarian, repo-librarian-deep | X |
-| **tool-check** | (단독) | X |
-| **verify-all** | ship-check + diff-review 에이전트 (합성 스킬) | X |
 | **release** | (단독, 스크립트 호출) | X |
 | **docs-sync** | docs-keeper, deepsearch | X |
-| **evolve** | deepsearch, repo-librarian, oracle, perf-analyst, security-auditor, critic | X |
 | **self-test** | (단독, 스크립트 호출) | X |
-| **ultrawork-loop** | ultrawork + ralph-loop 통합 (전체 에이전트 + Stop 훅) | X |
-| **deep-hunt** | bug-hunter, deepsearch | X |
 | **status** | (단독, 스크립트 호출) | X |
 
 ---
@@ -827,49 +814,6 @@ ralph-loop-cancel.sh --삭제--> ralph-loop.json (강제 종료)
 
 ---
 
-### 플로우 S: 온보딩 가이드 (onboard)
-
-```
-사용자: #ob
-```
-
-```
-1) repo-radar 실행 → 구조/스택 파악
-2) 메모리 읽기 → 축적된 컨벤션/결정 참조
-3) 개발 워크플로우 식별 → 설치, 실행, 테스트, 빌드, 배포
-4) 가이드 생성:
-   Project Onboarding Guide
-   ========================
-   Overview: Express.js 기반 결제 API 서버
-   Tech Stack: TypeScript, Express, PostgreSQL, Redis
-   Getting Started: npm install → .env 설정 → npm run dev
-   Key Files: src/server.ts, src/routes/, src/models/
-   Conventions: camelCase, barrel exports, jest 테스트
-```
-
----
-
-### 플로우 T: 도구 점검 (tool-check)
-
-```
-사용자: #tc
-```
-
-```
-1) 레포 스캔 → 어떤 도구가 필요한지 탐지
-2) 설치 여부 확인 → command -v, --version
-3) 결과:
-   | Tool | Required | Installed | Version  |
-   |------|----------|-----------|----------|
-   | node | yes      | yes       | v20.11.0 |
-   | jq   | yes      | no        | -        |
-   | gh   | yes      | yes       | 2.40.0   |
-
-   Missing: jq → brew install jq
-```
-
----
-
 ## 7. 브리핑 프로토콜
 
 에이전트가 작업 완료 시 `.claude/state/briefings/`에 구조화된 문서를 남기고, 다음 에이전트가 이를 컨텍스트로 소비합니다.
@@ -956,10 +900,7 @@ Haiku (빠름, 저비용) → Sonnet (균형) → Opus (최고 추론)
 
 | 기본 | 변형 | 전환 조건 |
 |------|------|----------|
-| critic (opus) | critic-lite (sonnet) | 플랜 4단계 이하 |
-| oracle (opus) | oracle-lite (sonnet) | 첫 시도, LOW confidence시 에스컬레이션 |
 | build-integrator (sonnet) | build-integrator-heavy (opus) | 2회 실패 후 |
-| repo-librarian (haiku) | repo-librarian-deep (sonnet) | 복잡한 기능 추적 |
 
 ### 에스컬레이션 판단
 
@@ -1002,8 +943,5 @@ test-commander → bug-hunter → build-integrator → test-commander
 ### 에스컬레이션 체인
 
 ```
-critic-lite ──LOW──→ critic (opus)
-oracle-lite ──LOW──→ oracle (opus)
 build-integrator ──2회 실패──→ build-integrator-heavy (opus)
-repo-librarian ──부족──→ repo-librarian-deep (sonnet)
 ```

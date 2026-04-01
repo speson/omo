@@ -22,7 +22,7 @@ read_cfg() {
 
 # Parse arguments
 prompt=""
-max_iterations=$(read_cfg "ralph-loop.max_iterations" "100")
+max_iterations=$(read_cfg "ralph-loop.max_iterations" "20")
 oracle_default=$(read_cfg "ralph-loop.oracle_default" "false")
 oracle_verify="${oracle_default}"
 
@@ -51,7 +51,7 @@ if command -v jq >/dev/null 2>&1; then
     --argjson max "${max_iterations}" \
     --argjson oracle "${oracle_verify}" \
     --arg started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    '{active:true,phase:"working",iteration:0,max_iterations:$max,oracle_verify:$oracle,prompt:$prompt,started_at:$started}' \
+    '{active:true,phase:"working",iteration:0,max_iterations:$max,oracle_verify:$oracle,stagnation_count:0,prompt:$prompt,started_at:$started}' \
     > "${STATE_FILE}"
 else
   safe_prompt=$(json_escape "${prompt}")
@@ -62,6 +62,7 @@ else
   "iteration": 0,
   "max_iterations": ${max_iterations},
   "oracle_verify": ${oracle_verify},
+  "stagnation_count": 0,
   "prompt": "${safe_prompt}",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
